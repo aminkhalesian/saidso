@@ -28,7 +28,7 @@ export function Account() {
   }
 
   async function feedback(signalId: number, f: "confirmed" | "dismissed" | "open") {
-    await api.feedback(signalId, f);
+    await api.feedback(clientId, signalId, f);
     reload();
   }
 
@@ -38,7 +38,8 @@ export function Account() {
     const win = arr.slice(Math.max(0, i - 6), i + 1);
     return { day: p.day, value: p.value, avg: i >= 6 ? win.reduce((t: number, x: any) => t + x.value, 0) / win.length : null };
   });
-  const tone = sc.activity_pct <= -0.08 ? "#E5534B" : "#1E3A5F";
+  const tone = sc.usage_known !== false && sc.activity_pct <= -0.08 ? "#E5534B" : "#1E3A5F";
+  const hasUsage = sc.usage_known !== false && data.activity.length > 0;
 
   return (
     <div className="reveal">
@@ -61,7 +62,12 @@ export function Account() {
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_370px]">
         <div className="space-y-5">
-          <Panel title="Renewal brief" aside={<span className="text-xs text-ink-3">{data.brief_source === "llm" ? "Written by AI from the evidence below" : "Written from the evidence below"}</span>}>
+          <Panel title="Renewal brief" aside={<span className="text-xs text-ink-3">{data.brief_source === "llm" ? "Written by AI from the evidence below" : "Rule-based summary of the evidence below (not AI)"}</span>}>
+            {data.brief_stale && (
+              <p className="mb-3 rounded-md bg-med-soft px-3 py-2 text-xs text-ink-2" role="status">
+                The data changed after this brief was written. The score is current; re-run the analysis to refresh the text and the playbook.
+              </p>
+            )}
             <div className="max-w-[68ch] space-y-2.5 text-[1.02rem] leading-relaxed">
               {brief.sentences.map((s: any, i: number) => (
                 <p key={i}>
@@ -110,6 +116,8 @@ export function Account() {
             </div>
           </Panel>
 
+          {brief.plan && <Playbook plan={brief.plan} source={brief.plan_source} jump={jump} />}
+
           <CustomerData s={data.sources} vocab={v} account={a.name} />
 
           <Panel title="Evidence" aside={<span className="text-xs text-ink-3">Confirm or dismiss each flag; dismissed flags stop counting toward the score</span>}>
@@ -126,6 +134,7 @@ export function Account() {
                       <span className="flex items-center gap-2 text-sm font-semibold">
                         <span className="rounded bg-act px-1.5 text-[0.68rem] font-bold leading-[1.15rem] text-white">{e.id}</span>
                         {e.kind === "signal" || e.label ? e.label : e.kind === "activity" ? v.activity : e.kind === "capacity" ? v.capacity : v.renewal}
+                        {e.polarity === "reassuring" && <span className="rounded bg-low-soft px-1.5 text-[0.68rem] font-semibold text-low">Reassuring</span>}
                       </span>
                       {sig && (
                         <span className="flex items-center gap-1">
@@ -144,8 +153,16 @@ export function Account() {
                         </span>
                       )}
                     </div>
-                    {e.kind === "signal" ? (
-                      <Quote text={e.quote} speaker={e.speaker} meta={`${e.title}, ${e.date}`} />
+                    {e.kind === "signal" || e.kind === "positive_quote" ? (
+                      <>
+                        <Quote text={e.quote} speaker={e.speaker} meta={`${e.title}, ${e.date}${sig ? ` · found by ${sig.source === "llm" ? "AI" : "keyword rules"}` : ""}`} />
+                        {e.conversation_id && (
+                          <button className="mt-2 text-xs font-medium text-act hover:underline"
+                            onClick={() => { setOpenConv(e.conversation_id); setTimeout(() => document.getElementById(`conv-${e.conversation_id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50); }}>
+                            Open the full call
+                          </button>
+                        )}
+                      </>
                     ) : (
                       <p className="text-sm text-ink-2">{e.text}</p>
                     )}
@@ -168,7 +185,7 @@ export function Account() {
           <Panel title={`Conversations (${data.conversations.length})`}>
             <ul className="divide-y divide-line">
               {data.conversations.map((cv: any) => (
-                <li key={cv.id} className="py-2">
+                <li key={cv.id} id={`conv-${cv.id}`} className="py-2">
                   <button className="flex w-full items-center justify-between text-left text-sm" onClick={() => setOpenConv(openConv === cv.id ? null : cv.id)} aria-expanded={openConv === cv.id}>
                     <span className="flex items-center gap-2 font-medium"><Phone size={14} className="text-ink-3" /> {cv.title}</span>
                     <span className="num text-xs text-ink-3">{cv.date}</span>
@@ -204,7 +221,10 @@ export function Account() {
             </ul>
           </Panel>
 
-          <Panel title={v.activity} aside={<span className="num text-sm font-semibold" style={{ color: tone }}>{pct(sc.activity_pct)}</span>}>
+          <Panel title={v.activity} aside={<span className="num text-sm font-semibold" style={{ color: tone }}>{hasUsage ? pct(sc.activity_pct) : "No data"}</span>}>
+            {!hasUsage ? (
+              <p className="text-sm text-ink-3">There is not enough usage data for this {v.account.toLowerCase()} to show a trend. Usage is not counted in the score.</p>
+            ) : (<>
             <div className="h-36">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chart} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
@@ -217,6 +237,7 @@ export function Account() {
               </ResponsiveContainer>
             </div>
             <p className="mt-2 text-xs text-ink-3">Line: 7-day average. Change compares the last 14 days with the earlier baseline.</p>
+            </>)}
           </Panel>
 
           <Panel title="Timeline">
@@ -271,5 +292,36 @@ export function Transcript({ text, quotes }: { text: string; quotes: string[] })
         );
       })}
     </div>
+  );
+}
+
+
+function Playbook({ plan, source, jump }: { plan: any; source: string; jump: (id: string) => void }) {
+  const cites = (it: any) => it.evidence.map((id: string) => <Cite key={id} id={id} onClick={() => jump(id)} />);
+  const Head = ({ children }: { children: string }) => <h4 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-3">{children}</h4>;
+  return (
+    <Panel title="Retention playbook" aside={<span className="text-xs text-ink-3">{source === "llm" ? "Written by AI from the evidence" : "Template playbook built from the evidence (not AI)"} · nothing is sent until you approve</span>}>
+      <div className="grid max-w-[72ch] gap-4 text-[0.95rem] leading-relaxed">
+        <section><Head>Main problem</Head><p>{plan.problem.text}{cites(plan.problem)}</p></section>
+        <section><Head>Goal of the conversation</Head><p>{plan.objective.text}{cites(plan.objective)}</p></section>
+        <section>
+          <Head>Three questions to ask</Head>
+          <ol className="space-y-1.5">
+            {plan.questions.map((q: any, i: number) => (
+              <li key={i} className="flex gap-2"><span className="w-4 shrink-0 text-right text-ink-3">{i + 1}</span><span>{q.text}{cites(q)}</span></li>
+            ))}
+          </ol>
+        </section>
+        <section>
+          <Head>Two ways to keep them</Head>
+          <ul className="space-y-1.5">
+            {plan.interventions.map((q: any, i: number) => (
+              <li key={i} className="flex gap-2"><span className="w-4 shrink-0 text-right text-ink-3">•</span><span>{q.text}{cites(q)}</span></li>
+            ))}
+          </ul>
+        </section>
+        <section><Head>Follow-up</Head><p>{plan.followup.text}{cites(plan.followup)}</p></section>
+      </div>
+    </Panel>
   );
 }

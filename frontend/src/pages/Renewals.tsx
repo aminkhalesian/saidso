@@ -70,7 +70,7 @@ export function Renewals() {
                   {shortDate(r.renewal_date)} <span className="text-ink-3">({r.days_to_renewal} d)</span>
                 </td>
                 <td className="num px-4 py-3 text-right">{euroShort(r.annual_value)}</td>
-                <td className={`num px-4 py-3 text-right ${r.activity_pct <= -0.08 ? "font-semibold text-high" : "text-ink-2"}`}>{pct(r.activity_pct)}</td>
+                <td className={`num px-4 py-3 text-right ${r.activity_pct <= -0.08 ? "font-semibold text-high" : "text-ink-2"}`}>{r.usage_known === false ? "–" : pct(r.activity_pct)}</td>
                 <td className="px-4 py-3 text-ink-2">{r.signals.length ? r.signals.join(", ") : <span className="text-ink-3">Nothing flagged</span>}</td>
               </tr>
             ))}

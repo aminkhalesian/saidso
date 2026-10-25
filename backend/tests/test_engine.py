@@ -86,12 +86,12 @@ def test_api_account_actions_feedback_trust_analyze(api):
     ev_ids = {e["id"] for e in detail["brief"]["evidence"]}
     assert all(set(s["evidence"]) <= ev_ids for s in detail["brief"]["sentences"])
 
-    act = api.post(f"/api/actions/{top['action']['id']}", json={"status": "approved"}).json()
+    act = api.post(f"/api/clients/brightdesk/actions/{top['action']['id']}", json={"status": "approved"}).json()
     assert act["status"] == "approved"
 
     sig = detail["signals"][0]
     before = detail["score"]["score"]
-    api.post(f"/api/signals/{sig['id']}/feedback", json={"feedback": "dismissed"})
+    api.post(f"/api/clients/brightdesk/signals/{sig['id']}/feedback", json={"feedback": "dismissed"})
     after = api.get(f"/api/clients/brightdesk/accounts/{top['account_id']}").json()["score"]["score"]
     assert after <= before
 

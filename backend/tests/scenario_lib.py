@@ -19,7 +19,7 @@ def transcript(*customer_turns: str) -> str:
     return "\n".join(out)
 
 
-def build(session, client_id: str, usage_change: float, turns: list[str], days_to_renewal: int = 40) -> int:
+def build(session, client_id: str, usage_change, turns: list[str], days_to_renewal: int = 40, usage_days: int = 90) -> int:
     """usage_change: -0.6 means the last 14 days are 60% below the earlier baseline. Returns the account id."""
     init_db()
     session.add(Client(id=client_id, name=f"Scenario {client_id}", pack_id="saas", user_name="Lena Vogt"))
@@ -31,9 +31,9 @@ def build(session, client_id: str, usage_change: float, turns: list[str], days_t
     today = dt.date.today()
     session.add(Contract(client_id=client_id, account_id=acc.id, billing_name=acc.name, match_confidence=1.0, plan="Team",
                          capacity=60, capacity_prev=60, monthly_value=2400.0, renewal_date=today + dt.timedelta(days=days_to_renewal)))
-    for i in range(90):
-        day = today - dt.timedelta(days=90 - i)
-        value = BASE * (1 + usage_change) if i >= 76 else BASE      # the last 14 days vs. everything before
+    for i in range(usage_days if usage_change is not None else 0):       # None = no usage data at all
+        day = today - dt.timedelta(days=usage_days - i)
+        value = BASE * (1 + usage_change) if i >= usage_days - 14 else BASE      # the last 14 days vs. everything before
         session.add(ActivityPoint(client_id=client_id, account_id=acc.id, day=day, value=value))
     session.add(Conversation(client_id=client_id, account_id=acc.id, kind="call", date=today - dt.timedelta(days=5),
                              title="Check-in call", transcript=transcript(*turns)))
