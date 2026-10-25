@@ -70,7 +70,7 @@ python -m app.cli add-sources                       # (re)generate demo usage, t
 python -m app.cli export-csv brightdesk ../pilot    # the 8 CSV files a customer would send in a pilot
 python -m app.cli import-csv brightdesk ../pilot    # run saidso on such a folder
 ```
-The usage trend and any cut in seats or hours count toward the risk score. Tickets and invoices are shown as context only.
+All four sources count toward the risk score (0-100): conversation signals 35, activity trend 25, seat or hours cut 10, unresolved support 10 (complaints weigh most), payment issues 10 (overdue invoices weigh most), renewal urgency 10. Weights live in each pack's `score:` block.
 
 ## Next-step plays
 Each signal has a short playbook in `backend/app/packs/<id>.yaml` and a full play in `backend/app/plays/<id>.yaml`

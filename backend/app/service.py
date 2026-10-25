@@ -44,12 +44,18 @@ def contexts(session, client_id: str, window: Optional[int] = None, today: Optio
     for s in session.scalars(select(Signal).where(Signal.client_id == client_id)):
         signals[s.account_id].append(s)
 
+    tickets, invoices = defaultdict(list), defaultdict(list)
+    for t in session.scalars(select(Ticket).where(Ticket.client_id == client_id)):
+        tickets[t.account_id].append(t)
+    for i in session.scalars(select(Invoice).where(Invoice.client_id == client_id)):
+        invoices[i.account_id].append(i)
+
     out = []
     for aid, acc in accounts.items():
         c = contracts.get(aid)
         if c is None:
             continue
-        sc = scoring.score(c, activity[aid], signals[aid], pack, today)
+        sc = scoring.score(c, activity[aid], signals[aid], pack, today, tickets[aid], invoices[aid])
         if window is not None and not (0 <= sc["days_to_renewal"] <= window):
             continue
         sig = sorted((_signal_dict(s, convs[s.conversation_id]) for s in signals[aid]), key=lambda x: x["date"], reverse=True)

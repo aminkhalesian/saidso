@@ -13,9 +13,11 @@ vocabulary:
   owner_role: Account manager
 
 score:
-  activity_drop_max: 30
-  capacity_cut_max: 15
-  signals_max: 45
+  activity_drop_max: 25     # a 30% drop in activity earns the full 25 points
+  capacity_cut_max: 10      # a 15% seat cut earns the full 10 points
+  signals_max: 35
+  support_max: 10           # unresolved complaints, high-priority and open tickets
+  payment_max: 10           # overdue and late invoices
   urgency_max: 10
   bands: {high: 50, medium: 25}
 
