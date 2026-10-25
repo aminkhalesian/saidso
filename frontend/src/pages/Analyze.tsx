@@ -5,6 +5,7 @@ import { api } from "../api";
 import { useClient } from "../context";
 import { Button, PageHead, Panel, Quote } from "../components/ui";
 import { Transcript } from "./Account";
+import { ImportPanel } from "../components/ImportPanel";
 
 export function Analyze() {
   const { clientId = "" } = useParams();
@@ -86,6 +87,8 @@ export function Analyze() {
           {result && <Transcript text={text} quotes={result.signals.map((s: any) => s.quote)} />}
         </Panel>
       </div>
+
+      <ImportPanel clientId={clientId} customers={v.accounts.toLowerCase()} />
     </div>
   );
 }

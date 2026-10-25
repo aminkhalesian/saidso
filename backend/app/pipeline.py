@@ -33,6 +33,26 @@ def build_outputs(session, client: Client, window: int = 90, llm_emails: bool = 
     return {"actions": n_actions}
 
 
+def build_outputs_for(session, client: Client, account_ids, window: int = 90, llm_emails: bool = False) -> list[dict]:
+    """Brief and drafted steps for some accounts only (used after an upload). Returns their summaries."""
+    pack = load_pack(client.pack_id)
+    ids, out = set(account_ids), []
+    session.execute(delete(Brief).where(Brief.account_id.in_(ids)))
+    for ctx in service.contexts(session, client.id, window=3650):
+        if ctx["account"]["id"] not in ids:
+            continue
+        service.with_sources(session, client.id, ctx, pack)
+        payload, source = brief.make(ctx, pack)
+        session.add(Brief(account_id=ctx["account"]["id"], client_id=client.id, payload=payload, source=source,
+                          created_at=dt.datetime.now()))
+        if brief.wants_plan(ctx):
+            actions.draft_for(session, client.id, ctx, pack, use_llm_emails=llm_emails, plan=payload.get("plan"),
+                              plan_source=payload.get("plan_source", "template"))
+        out.append(ctx)
+    session.commit()
+    return out
+
+
 def rebuild_actions(session, client: Client, window: int = 90, llm_emails: bool = False) -> dict:
     """Redraft next steps from the current playbooks without re-reading any call. Signals, scores and briefs
     stay as they are; drafts are replaced, approved and dismissed actions are kept."""
