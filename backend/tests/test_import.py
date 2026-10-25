@@ -46,29 +46,47 @@ def test_parsing_tidies_messy_values():
     assert csv_import._date("not a date", []) is None
 
 
-def test_upload_lands_in_dashboard_and_renewals_and_can_be_removed(session, http):
+def test_upload_waits_for_a_decision_then_lands_in_the_lists(session, http):
     _client(session)
     r = http.post("/api/clients/imp/import", json={"csv": FILE})
     assert r.status_code == 200, r.text
+    assert r.json()["pending"] is True
     rep = {x["customer"]: x for x in reversed(r.json()["rows"])}
     assert rep["Nordwind Energie GmbH"]["status"] == "added" and rep["Sonnental Foods"]["status"] == "added"
     assert "past" in rep["Vergangenheit AG"]["reason"]
     assert any(x["status"] == "skipped" and "twice" in x["reason"] for x in r.json()["rows"])
     assert {"Competitor evaluation", "Budget pressure"} <= set(rep["Nordwind Energie GmbH"]["signals"])
+    assert rep["Nordwind Energie GmbH"]["score"] > 0                       # the preview already shows where it would land
+    over = http.get("/api/clients/imp/overview").json()
+    assert over["renewals"] == [] and over["this_week"] == [] and over["kpis"]["open_actions"] == 0   # nothing counts yet
+
+    http.post("/api/clients/imp/import/accept")
     over = http.get("/api/clients/imp/overview").json()
     names = {x["name"]: x for x in over["renewals"]}
     assert "Nordwind Energie GmbH" in names and "Vergangenheit AG" not in names
     for sig in rep["Nordwind Energie GmbH"]["signals"]:                      # flags are tied to a verbatim quote
         assert sig in names["Nordwind Energie GmbH"]["signals"]
-    if names["Nordwind Energie GmbH"]["band"] == "high":
-        assert "Nordwind Energie GmbH" in [x["name"] for x in over["this_week"]]
     acc = http.get(f"/api/clients/imp/accounts/{names['Nordwind Energie GmbH']['account_id']}").json()
     assert all(s["quote"] in acc["conversations"][0]["transcript"] for s in acc["signals"])
-    again = http.post("/api/clients/imp/import", json={"csv": FILE}).json()      # the same file twice does not duplicate
-    assert [x["status"] for x in again["rows"]][:1] == ["updated"]
+
+    again = http.post("/api/clients/imp/import", json={"csv": FILE}).json()      # the same file again adds flags, no duplicate
+    assert again["rows"][0]["status"] == "updated"
+    still = http.get("/api/clients/imp/accounts/%d" % names["Nordwind Energie GmbH"]["account_id"]).json()
+    assert len(still["conversations"]) == 1                                  # the waiting call is not shown yet
+    http.delete("/api/clients/imp/import/pending")
     assert len([x for x in http.get("/api/clients/imp/overview").json()["renewals"] if x["name"] == "Nordwind Energie GmbH"]) == 1
-    http.delete("/api/clients/imp/import")
+
+    http.delete("/api/clients/imp/import")                                    # remove everything an upload added
     assert http.get("/api/clients/imp/overview").json()["renewals"] == []
+
+
+def test_declining_removes_the_waiting_upload(session, http):
+    _client(session, "imp3")
+    http.post("/api/clients/imp3/import", json={"csv": FILE})
+    http.delete("/api/clients/imp3/import/pending")
+    assert http.get("/api/clients/imp3/overview").json()["renewals"] == []
+    http.post("/api/clients/imp3/import/accept")                              # nothing waiting: nothing to add
+    assert http.get("/api/clients/imp3/overview").json()["renewals"] == []
 
 
 def test_upload_needs_a_customer_column(session, http):

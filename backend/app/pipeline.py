@@ -39,7 +39,7 @@ def build_outputs_for(session, client: Client, account_ids, window: int = 90, ll
     ids = set(account_ids)
     session.execute(delete(Brief).where(Brief.account_id.in_(ids)))
     out = []
-    for ctx in service.contexts(session, client.id, window=3650):
+    for ctx in service.contexts(session, client.id, window=3650, include_pending=True):
         if ctx["account"]["id"] in ids:
             service.with_sources(session, client.id, ctx, pack)
             out.append(ctx)

@@ -28,12 +28,15 @@ def _account_dict(a: Account) -> dict:
             "contact_name": a.contact_name, "contact_role": a.contact_role, "owner": a.owner}
 
 
-def contexts(session, client_id: str, window: Optional[int] = None, today: Optional[dt.date] = None) -> list[dict]:
+def contexts(session, client_id: str, window: Optional[int] = None, today: Optional[dt.date] = None,
+             include_pending: bool = False) -> list[dict]:
     """One context per account with a matched contract: account + contract + signals + score."""
     from .models import Client
     client = session.get(Client, client_id)
     pack = load_pack(client.pack_id)
-    accounts = {a.id: a for a in session.scalars(select(Account).where(Account.client_id == client_id))}
+    from .models import PENDING_EMPLOYEES, PENDING_KIND
+    accounts = {a.id: a for a in session.scalars(select(Account).where(Account.client_id == client_id))
+                if include_pending or a.employees != PENDING_EMPLOYEES}
     contracts = {c.account_id: c for c in session.scalars(
         select(Contract).where(Contract.client_id == client_id, Contract.account_id.is_not(None)))}
     activity = defaultdict(list)
@@ -42,11 +45,12 @@ def contexts(session, client_id: str, window: Optional[int] = None, today: Optio
     convs = {c.id: c for c in session.scalars(select(Conversation).where(Conversation.client_id == client_id))}
     signals = defaultdict(list)
     for s in session.scalars(select(Signal).where(Signal.client_id == client_id)):
-        signals[s.account_id].append(s)
+        if include_pending or convs[s.conversation_id].kind != PENDING_KIND:
+            signals[s.account_id].append(s)
 
     positives = defaultdict(list)
     for r in session.scalars(select(Reassurance).where(Reassurance.client_id == client_id)):
-        if r.conversation_id in convs:
+        if r.conversation_id in convs and (include_pending or convs[r.conversation_id].kind != PENDING_KIND):
             positives[r.account_id].append({"id": r.id, "quote": r.quote, "speaker": r.speaker, "conversation_id": r.conversation_id,
                                             "date": convs[r.conversation_id].date.isoformat(), "title": convs[r.conversation_id].title})
     tickets, invoices = defaultdict(list), defaultdict(list)
