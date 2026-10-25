@@ -37,7 +37,7 @@ export function Account() {
     const win = arr.slice(Math.max(0, i - 6), i + 1);
     return { day: p.day, value: p.value, avg: i >= 6 ? win.reduce((t: number, x: any) => t + x.value, 0) / win.length : null };
   });
-  const tone = sc.activity_pct <= -0.08 ? "#B3263E" : "#3344C1";
+  const tone = sc.activity_pct <= -0.08 ? "#E5534B" : "#1E3A5F";
 
   return (
     <div className="reveal">
@@ -46,7 +46,7 @@ export function Account() {
       </Link>
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-[2rem] font-bold tracking-tight">{a.name}</h1>
+          <h1 className="text-[1.65rem] font-bold tracking-tight">{a.name}</h1>
           <RiskPill band={sc.band} score={sc.score} />
         </div>
         <p className="num mt-1.5 text-sm text-ink-2">
@@ -84,7 +84,7 @@ export function Account() {
                   <li
                     key={e.id}
                     id={`ev-${e.id}`}
-                    className={`scroll-mt-24 rounded-lg border p-4 transition-colors ${flash === e.id ? "border-act bg-act-soft" : "border-line"}`}
+                    className={`scroll-mt-24 rounded-xl border p-4 transition-colors ${flash === e.id ? "border-act bg-act-soft" : "border-line"}`}
                   >
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <span className="flex items-center gap-2 text-sm font-semibold">
@@ -161,7 +161,7 @@ export function Account() {
                     <span className="num font-semibold">{p.points} <span className="font-normal text-ink-3">of {p.max}</span></span>
                   </div>
                   <div className="h-1.5 rounded-full bg-line">
-                    <div className="h-full rounded-full bg-ink" style={{ width: `${(p.points / p.max) * 100}%` }} />
+                    <div className="h-full rounded-full bg-act" style={{ width: `${(p.points / p.max) * 100}%` }} />
                   </div>
                 </li>
               ))}
@@ -172,8 +172,8 @@ export function Account() {
             <div className="h-36">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chart} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
-                  <XAxis dataKey="day" tickFormatter={(d) => shortDate(d)} tick={{ fontSize: 11, fill: "#7B8494" }} interval={29} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#7B8494" }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="day" tickFormatter={(d) => shortDate(d)} tick={{ fontSize: 11, fill: "#8A92A0" }} interval={29} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "#8A92A0" }} axisLine={false} tickLine={false} />
                   <Tooltip formatter={(val: any) => Math.round(val * 10) / 10} labelFormatter={(d) => shortDate(d)} />
                   <Area dataKey="value" stroke="none" fill={tone} fillOpacity={0.08} isAnimationActive={false} />
                   <Area dataKey="avg" stroke={tone} strokeWidth={2} fill="none" isAnimationActive={false} connectNulls />

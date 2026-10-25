@@ -45,7 +45,7 @@ export function ActionCard({ action, compact = false, onChange }: { action: any;
   }
 
   return (
-    <div className="rounded-lg border border-line bg-panel">
+    <div className="rounded-xl border border-line bg-panel">
       <div className="flex items-start gap-3 px-3.5 pt-3">
         <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-md bg-act-soft text-act" title={kind.label}>
           <Icon size={15} />

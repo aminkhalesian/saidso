@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, euroShort, pct, shortDate } from "../api";
 import { useAsync, useClient } from "../context";
-import { ErrorNote, Loading, RiskBar, RiskPill } from "../components/ui";
+import { ErrorNote, Loading, PageHead, Panel, RiskBar, RiskPill, Segmented } from "../components/ui";
 
 const WINDOWS = [30, 60, 90];
 
@@ -20,27 +20,25 @@ export function Renewals() {
 
   return (
     <div className="reveal">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[1.9rem] font-bold tracking-tight">All renewals</h1>
-          <p className="mt-1 text-ink-2">
-            {data.kpis.renewals} {v.accounts.toLowerCase()} renew in the next {window} days, worth {euroShort(data.kpis.total_value)} a year.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Segmented value={window} options={WINDOWS.map((w) => ({ value: w, label: `${w} days` }))} onChange={setWindow} />
-          <Segmented
-            value={band}
-            options={[{ value: "all", label: "All" }, { value: "high", label: "High risk" }, { value: "medium", label: "Watch" }, { value: "low", label: "Healthy" }]}
-            onChange={setBand}
-          />
-        </div>
-      </header>
+      <PageHead
+        title="All renewals"
+        sub={<>{data.kpis.renewals} {v.accounts.toLowerCase()} renew in the next {window} days, worth {euroShort(data.kpis.total_value)} a year.</>}
+        aside={
+          <div className="flex flex-wrap gap-2">
+            <Segmented value={window} options={WINDOWS.map((w) => ({ value: w, label: `${w} days` }))} onChange={setWindow} />
+            <Segmented
+              value={band}
+              options={[{ value: "all", label: "All" }, { value: "high", label: "High risk" }, { value: "medium", label: "Watch" }, { value: "low", label: "Healthy" }]}
+              onChange={setBand}
+            />
+          </div>
+        }
+      />
 
-      <div className="overflow-x-auto rounded-xl border border-line bg-panel">
+      <Panel className="!p-0 overflow-x-auto">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
-            <tr className="border-b border-line text-left text-xs text-ink-3">
+            <tr className="border-b border-line bg-paper text-left text-[11px] uppercase tracking-[0.08em] text-ink-3">
               <th className="px-4 py-3 font-medium">{v.account}</th>
               <th className="px-4 py-3 font-medium">Risk</th>
               <th className="px-4 py-3 font-medium">Renews</th>
@@ -79,25 +77,7 @@ export function Renewals() {
           </tbody>
         </table>
         {rows.length === 0 && <p className="px-4 py-10 text-center text-sm text-ink-3">No renewals match these filters. Widen the window or pick another risk level.</p>}
-      </div>
-    </div>
-  );
-}
-
-export function Segmented<T extends string | number>({ value, options, onChange }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void }) {
-  return (
-    <div className="inline-flex rounded-lg border border-line bg-panel p-0.5" role="radiogroup">
-      {options.map((o) => (
-        <button
-          key={String(o.value)}
-          role="radio"
-          aria-checked={o.value === value}
-          onClick={() => onChange(o.value)}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium ${o.value === value ? "bg-ink text-white" : "text-ink-2 hover:text-ink"}`}
-        >
-          {o.label}
-        </button>
-      ))}
+      </Panel>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { FileText, Sparkles } from "lucide-react";
 import { api } from "../api";
 import { useClient } from "../context";
-import { Button, Panel, Quote } from "../components/ui";
+import { Button, PageHead, Panel, Quote } from "../components/ui";
 import { Transcript } from "./Account";
 
 export function Analyze() {
@@ -41,13 +41,10 @@ export function Analyze() {
 
   return (
     <div className="reveal">
-      <header className="mb-6 max-w-3xl">
-        <h1 className="text-[1.9rem] font-bold tracking-tight">Analyze a call</h1>
-        <p className="mt-1 text-ink-2">
-          Paste a conversation with a {v.account.toLowerCase()}. The AI flags renewal risks and shows the exact sentence behind each one.
-          Anything it can't quote word for word gets thrown out.
-        </p>
-      </header>
+      <PageHead
+        title="Analyze a call"
+        sub={`Paste a conversation with a ${v.account.toLowerCase()}. The AI flags renewal risks and shows the exact sentence behind each one. Anything it can't quote word for word gets thrown out.`}
+      />
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Transcript" aside={<Button variant="ghost" onClick={sample}><FileText size={15} /> Load a sample call</Button>}>
@@ -55,7 +52,7 @@ export function Analyze() {
             value={text}
             onChange={(e) => { setText(e.target.value); setErr(null); }}
             placeholder={`One turn per line, for example:\nPriya Raman (Operations Lead, Northwind): We're reviewing our tools next quarter.`}
-            className="h-80 w-full rounded-lg border border-line bg-paper p-3 font-[inherit] text-sm leading-relaxed"
+            className="h-80 w-full rounded-[10px] border border-line-2 bg-panel p-3 font-[inherit] text-sm leading-relaxed"
             aria-label="Transcript"
           />
           {err && <p className="mt-2 text-sm text-high">{err}</p>}
@@ -75,7 +72,7 @@ export function Analyze() {
           ) : (
             <ul className="space-y-4">
               {result.signals.map((s: any, i: number) => (
-                <li key={i} className="rounded-lg border border-line p-4">
+                <li key={i} className="rounded-xl border border-line bg-paper p-4">
                   <p className="mb-2 flex items-center justify-between text-sm font-semibold">
                     {s.label}
                     <span className="num text-xs font-normal text-ink-3">confidence {Math.round(s.confidence * 100)}%</span>

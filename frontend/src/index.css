@@ -1,32 +1,42 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #F3F5F8;
+  --color-paper: #F3F4F6;
+  --color-paper-2: #E8EAEE;
   --color-panel: #FFFFFF;
-  --color-ink: #18212F;
-  --color-ink-2: #4A5566;
-  --color-ink-3: #7B8494;
-  --color-line: #DFE3EA;
-  --color-mark: #FFE07A;
-  --color-act: #3344C1;
-  --color-act-soft: #E8EAFB;
-  --color-high: #B3263E;
-  --color-high-soft: #FBEAEC;
-  --color-med: #B87400;
-  --color-med-soft: #FBF1DE;
-  --color-low: #2E7A58;
-  --color-low-soft: #E4F2EA;
-  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-quote: "Newsreader", Georgia, serif;
+  --color-ink: #111827;
+  --color-ink-2: #5B6472;
+  --color-ink-3: #8A92A0;
+  --color-line: #E1E4E9;
+  --color-line-2: #D3D7DE;
+  --color-mark: #F6E3B4;
+  --color-brass: #E9A23B;
+  --color-act: #1E3A5F;
+  --color-act-deep: #14294A;
+  --color-act-soft: #E6ECF4;
+  /* text-safe tones (use for text on soft backgrounds) */
+  --color-high: #B4321F;
+  --color-high-soft: #FCE8E6;
+  --color-med: #8A5F12;
+  --color-med-soft: #FDF1D6;
+  --color-low: #1F7A5A;
+  --color-low-soft: #DFF3EA;
+  /* chart / fill tones */
+  --color-high-fill: #E5534B;
+  --color-med-fill: #F2B544;
+  --color-low-fill: #2FA67C;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-quote: "Source Serif 4", Georgia, serif;
+  --shadow-card: 0 1px 2px rgb(17 24 39 / 0.05), 0 10px 28px -12px rgb(17 24 39 / 0.12);
 }
 
 html, body, #root { height: 100%; }
-body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); font-size: 14px; -webkit-font-smoothing: antialiased; }
 .num { font-variant-numeric: tabular-nums; }
-.quote { font-family: var(--font-quote); font-style: italic; }
-.mark { background: linear-gradient(transparent 12%, var(--color-mark) 12%, var(--color-mark) 88%, transparent 88%); box-decoration-break: clone; -webkit-box-decoration-break: clone; padding: 0 .15em; }
-:focus-visible { outline: 2px solid var(--color-act); outline-offset: 2px; border-radius: 4px; }
+.quote { font-family: var(--font-quote); }
+.mark { background: linear-gradient(transparent 58%, var(--color-mark) 58%); font-weight: 600; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+:focus-visible { outline: 2px solid var(--color-act); outline-offset: 2px; border-radius: 6px; }
 @media (prefers-reduced-motion: no-preference) {
-  .reveal { animation: reveal .5s ease-out both; }
+  .reveal { animation: reveal .4s ease-out both; }
   @keyframes reveal { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 }
