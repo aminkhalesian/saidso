@@ -14,7 +14,7 @@ from sqlalchemy import select
 from . import pipeline, service
 from .engine import actions as actions_mod
 from .engine import brief as brief_mod
-from .engine import extract, llm
+from .engine import extract, kpis, llm
 from .engine.evaluate import evaluate
 from .models import Action, Brief, Client, Conversation, SessionLocal, Signal, init_db
 from .packs import load_pack, public_view
@@ -87,6 +87,8 @@ def overview(client_id: str, window: int = 90, session=Depends(db)):
         week.append({**summary_row(c, pack), "reason": top, "action": drafts[aid][0] if drafts[aid] else None,
                      "more_actions": max(0, len(drafts[aid]) - 1)})
     done = session.scalars(select(Action).where(Action.client_id == client_id, Action.status != "draft")).all()
+    for c in ctxs:
+        service.with_sources(session, client_id, c, pack)
     return {
         "client": {"id": client.id, "name": client.name, "user_name": client.user_name},
         "kpis": {"renewals": len(ctxs), "high_risk": len(high),
@@ -95,6 +97,7 @@ def overview(client_id: str, window: int = 90, session=Depends(db)):
                  "signals": sum(len(c["signals"]) for c in ctxs),
                  "open_actions": sum(len(v) for v in drafts.values()),
                  "decided_actions": len(done)},
+        "outlook": kpis.compute(ctxs),
         "this_week": week,
         "renewals": [summary_row(c, pack) for c in ctxs],
     }
