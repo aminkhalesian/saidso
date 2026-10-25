@@ -5,7 +5,7 @@ import { useApp, useClient } from "../context";
 const NAV = [
   { to: "week", label: "Dashboard", icon: CalendarCheck },
   { to: "renewals", label: "All renewals", icon: Rows3 },
-  { to: "retention", label: "Retention outlook", icon: Gauge },
+  { to: "retention", label: "Retention analytics", icon: Gauge },
   { to: "portfolio", label: "Portfolio", icon: PieChart },
   { to: "sources", label: "Data sources", icon: Database },
   { to: "trust", label: "Accuracy", icon: ShieldCheck },

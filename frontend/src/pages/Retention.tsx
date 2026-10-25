@@ -12,7 +12,7 @@ export function Retention() {
   if (!data || !client) return <Loading />;
   return (
     <div className="reveal">
-      <PageHead title="Retention outlook" sub={`${data.client.user_name} · ${data.kpis.renewals} renewals in the next 90 days`} />
+      <PageHead title="Retention analytics" sub={`${data.client.user_name} · ${data.kpis.renewals} renewals in the next 90 days`} />
       <Outlook o={data.outlook} />
     </div>
   );
