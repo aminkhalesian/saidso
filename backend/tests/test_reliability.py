@@ -139,3 +139,14 @@ def test_the_api_key_never_reaches_the_browser(session, http, monkeypatch):
                 "/api/clients/rel-key/sources", "/api/clients/rel-key/trust"):
         r = http.get(url)
         assert r.status_code == 200 and "SECRET-VALUE" not in r.text, url
+
+
+def test_dashboard_lists_every_high_risk_customer(session, http):
+    heavy = BUDGET + ["The price is far too expensive for what we get.", "We are also looking at Vantora right now."]
+    for i in range(6):                                   # six high-risk customers in one client: more than the old limit of four
+        build(session, "dash", -0.7, heavy, days_to_renewal=15 + i, name=f"Heavy {i}")
+    pipeline.build_outputs(session, session.get(Client, "dash"))
+    over = http.get("/api/clients/dash/overview").json()
+    high = [r for r in over["renewals"] if r["band"] == "high"]
+    assert len(high) == 6 and len(over["this_week"]) == 6
+    assert {r["account_id"] for r in over["this_week"]} == {r["account_id"] for r in high}

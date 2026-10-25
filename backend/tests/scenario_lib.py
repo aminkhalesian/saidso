@@ -19,12 +19,14 @@ def transcript(*customer_turns: str) -> str:
     return "\n".join(out)
 
 
-def build(session, client_id: str, usage_change, turns: list[str], days_to_renewal: int = 40, usage_days: int = 90) -> int:
+def build(session, client_id: str, usage_change, turns: list[str], days_to_renewal: int = 40, usage_days: int = 90,
+          name: str = "") -> int:
     """usage_change: -0.6 means the last 14 days are 60% below the earlier baseline. Returns the account id."""
     init_db()
-    session.add(Client(id=client_id, name=f"Scenario {client_id}", pack_id="saas", user_name="Lena Vogt"))
-    session.commit()
-    acc = Account(client_id=client_id, name=f"Acme {client_id}", segment="Software", employees=120, contact_name="Mia Novak",
+    if session.get(Client, client_id) is None:
+        session.add(Client(id=client_id, name=f"Scenario {client_id}", pack_id="saas", user_name="Lena Vogt"))
+        session.commit()
+    acc = Account(client_id=client_id, name=name or f"Acme {client_id}", segment="Software", employees=120, contact_name="Mia Novak",
                   contact_role="Operations Lead", owner="Lena Vogt")
     session.add(acc)
     session.commit()

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, euroShort, pct, shortDate } from "../api";
 import { useAsync, useClient } from "../context";
+import { SortHead, useSort } from "../components/sort";
 import { ErrorNote, Loading, PageHead, Panel, RiskBar, RiskPill, Segmented } from "../components/ui";
 
 const WINDOWS = [30, 60, 90];
@@ -13,7 +14,8 @@ export function Renewals() {
   const [window, setWindow] = useState(90);
   const [band, setBand] = useState<"all" | "high" | "medium" | "low">("all");
   const { data, error } = useAsync(() => api.overview(clientId, window), [clientId, window]);
-  const rows = useMemo(() => (data?.renewals ?? []).filter((r: any) => band === "all" || r.band === band), [data, band]);
+  const { sort, toggle, apply } = useSort("score");
+  const rows = useMemo(() => apply<any>((data?.renewals ?? []).filter((r: any) => band === "all" || r.band === band)), [data, band, sort]);
   if (error) return <ErrorNote error={error} />;
   if (!data || !client) return <Loading />;
   const v = client.pack.vocabulary;
@@ -40,8 +42,8 @@ export function Renewals() {
           <thead>
             <tr className="border-b border-line bg-paper text-left text-[11px] uppercase tracking-[0.08em] text-ink-3">
               <th className="px-4 py-3 font-medium">{v.account}</th>
-              <th className="px-4 py-3 font-medium">Risk</th>
-              <th className="px-4 py-3 font-medium">Renews</th>
+              <th className="px-4 py-3 font-medium"><SortHead label="Risk" k="score" sort={sort} onToggle={toggle} /></th>
+              <th className="px-4 py-3 font-medium"><SortHead label="Renews" k="days" sort={sort} onToggle={toggle} /></th>
               <th className="px-4 py-3 text-right font-medium">Per year</th>
               <th className="px-4 py-3 text-right font-medium">{v.activity}</th>
               <th className="px-4 py-3 font-medium">What was said</th>

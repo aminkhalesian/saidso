@@ -44,7 +44,7 @@ engine/       extract.py   LLM extraction; drops any quote that isn't verbatim i
 packs/        saas.yaml, agency.yaml       -> everything industry-specific
 models.py     canonical model; every row has client_id (SQLite default, DATABASE_URL for Postgres)
 main.py       FastAPI: overview, renewals, account, actions, feedback, portfolio, trust, analyze
-frontend/     React + Vite + Tailwind: My week, All renewals, Account, Portfolio, Accuracy, Analyze a call
+frontend/     React + Vite + Tailwind: Dashboard, All renewals, Account, Portfolio, Accuracy, Analyze a call
 ```
 
 ## Adding an industry
