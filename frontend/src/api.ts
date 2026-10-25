@@ -57,6 +57,9 @@ export const api = {
   sample: (c: string) => req<{ transcript: string }>(`/clients/${c}/sample-transcript`),
   analyze: (c: string, transcript: string) =>
     req<any>(`/clients/${c}/analyze`, { method: "POST", body: JSON.stringify({ transcript }) }),
+  importTemplate: (c: string) => req<{ csv: string }>(`/clients/${c}/import-template`),
+  importCsv: (c: string, csv: string) => req<any>(`/clients/${c}/import`, { method: "POST", body: JSON.stringify({ csv }) }),
+  undoImport: (c: string) => req<any>(`/clients/${c}/import`, { method: "DELETE" }),
   decide: (client: string, id: number, status: "approved" | "dismissed" | "draft", body?: string) =>
     req<any>(`/clients/${client}/actions/${id}`, { method: "POST", body: JSON.stringify({ status, body }) }),
   feedback: (client: string, id: number, feedback: "confirmed" | "dismissed" | "open") =>

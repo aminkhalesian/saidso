@@ -1,6 +1,8 @@
 """HTTP API. Run: uvicorn app.main:app --reload   (serves the built frontend at / when frontend/dist exists)"""
 from typing import Optional
+import csv
 import datetime as dt
+import io
 from collections import defaultdict
 from pathlib import Path
 
@@ -14,6 +16,7 @@ from sqlalchemy import select
 from . import pipeline, service
 from .engine import actions as actions_mod
 from .engine import brief as brief_mod
+from .connectors import csv_import
 from .engine import extract, kpis, llm
 from .engine.evaluate import evaluate
 from .models import Action, Brief, Client, Conversation, SessionLocal, Signal, init_db
@@ -246,6 +249,61 @@ def analyze(client_id: str, body: AnalyzeIn, session=Depends(db)):
         s["playbook"] = pack["signals"][s["signal_type"]]["playbook"]["title"].format(
             account="this account", contact_first="the customer")
     return {"signals": sigs, "source": source, "turns": len(extract.parse_turns(body.transcript, extract.staff_label(pack)))}
+
+
+class ImportIn(BaseModel):
+    csv: str
+
+
+@app.get("/api/clients/{client_id}/import-template")
+def import_template(client_id: str, session=Depends(db)):
+    client, pack = get_client(client_id, session)
+    syn = pack["synthetic"]
+    fill = {"co": "Northwind", "nxt": "Sam Keller", "capacity": 40, **{k: v[0] for k, v in syn.get("fill", {}).items()}}
+    kinds = list(pack["signals"])
+    notes = [syn["signal_lines"][k][0].format(**fill) for k in kinds[:3]]
+    today = dt.date.today()
+    rows = [("Northwind Logistics", "Logistics", "Priya Raman", "Operations Lead", 40, 52, 38400, 24, -0.38, notes[0], 2, 1),
+            ("Alpenblick Hotels", "Hospitality", "Jonas Berger", "Finance Director", 25, 25, 21000, 40, -0.12, notes[1 % len(notes)], 0, 0),
+            ("Sonnental Foods", "Food", "Eva Lindqvist", "Head of Ops", 60, 55, 54000, 55, 0.18, "We are very happy with the rollout and will recommend you to our sister company.", 0, 0)]
+    head = "customer,segment,contact_name,contact_role,seats,seats_prev,annual_value,renewal_date,usage_change_pct,call_notes,urgent_tickets,overdue_invoices"
+    out = io.StringIO()
+    w = csv.writer(out)
+    for r in rows:
+        w.writerow([r[0], r[1], r[2], r[3], r[4], r[5], r[6], (today + dt.timedelta(days=r[7])).isoformat(), r[8], r[9], r[10], r[11]])
+    return {"csv": head + "\r\n" + out.getvalue()}
+
+
+@app.post("/api/clients/{client_id}/import")
+def import_csv(client_id: str, body: ImportIn, session=Depends(db)):
+    client, pack = get_client(client_id, session)
+    if len(body.csv) > 600_000:
+        raise HTTPException(413, "file too large for the demo (max 600 KB)")
+    result = csv_import.run(session, client, pack, body.csv)
+    if "error" in result:
+        raise HTTPException(422, result["error"])
+    ctxs = pipeline.build_outputs_for(session, client, result["touched"])
+    by_id = {c["account"]["id"]: c for c in ctxs}
+    for line in result["rows"]:
+        c = by_id.get(line.get("account_id"))
+        if c is not None:
+            row = summary_row(c, pack)
+            line.update(score=row["score"], band=row["band"], days_to_renewal=row["days_to_renewal"], signals=row["signals"],
+                        on_dashboard=row["band"] == "high" and 0 <= row["days_to_renewal"] <= 90,
+                        in_renewals=0 <= row["days_to_renewal"] <= 90)
+    result["summary"] = {k: sum(1 for r in result["rows"] if r["status"] == k) for k in ("added", "updated", "skipped")}
+    result["summary"]["flags"] = sum(len(r.get("signals", [])) for r in result["rows"])
+    del result["touched"]
+    return result
+
+
+@app.delete("/api/clients/{client_id}/import")
+def undo_import(client_id: str, session=Depends(db)):
+    client, pack = get_client(client_id, session)
+    res = csv_import.remove_imported(session, client_id)
+    if res["refresh"]:
+        pipeline.build_outputs_for(session, client, res["refresh"])
+    return {k: v for k, v in res.items() if k != "refresh"}
 
 
 @app.get("/api/clients/{client_id}/sample-transcript")

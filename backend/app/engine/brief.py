@@ -173,7 +173,7 @@ def template(ctx: dict, ev: list[dict], pack: dict) -> dict:
             out.append({"text": e["text"], "evidence": [e["id"]]})
     if sigs:
         nxt = {"text": pack["signals"][sigs[0]["signal_type"]]["playbook"]["title"].format(
-            account=ctx["account"]["name"], contact_first=ctx["account"]["contact_name"].split()[0]) + ".",
+            account=ctx["account"]["name"], contact_first=(ctx["account"]["contact_name"].split() or ["there"])[0]) + ".",
             "evidence": [sigs[0]["id"]]}
     elif "activity" in by_kind and sc["activity_pct"] < 0:
         nxt = {"text": "Ask which workflows the team stopped using and offer a short re-onboarding.", "evidence": [by_kind["activity"]["id"]]}

@@ -26,7 +26,7 @@ class _Safe(dict):
 def _vars(ctx: dict, pack: dict) -> dict:
     a = ctx["account"]
     days = ctx["score"]["days_to_renewal"]
-    return dict(account=a["name"], contact_first=a["contact_name"].split()[0], owner=a["owner"],
+    return dict(account=a["name"], contact_first=(a["contact_name"].split() or ["there"])[0], owner=a["owner"],
                 product=pack["synthetic"]["product"], days=days,
                 early=(f"this week, the renewal is only {days} days away" if days <= 45
                        else "at least 45 days before the renewal date"),
