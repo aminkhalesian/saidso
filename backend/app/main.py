@@ -133,7 +133,8 @@ def account(client_id: str, account_id: int, session=Depends(db)):
     return {**ctx, "brief": payload, "brief_source": source,
             "activity": [{"day": p.day.isoformat(), "value": p.value} for p in act],
             "conversations": [{"id": c.id, "date": c.date.isoformat(), "title": c.title, "transcript": c.transcript} for c in convs],
-            "actions": [action_dict(a) for a in acts], "timeline": timeline}
+            "actions": [action_dict(a) for a in acts], "timeline": timeline,
+            "sources": service.account_sources(session, client_id, account_id, pack, ctx)}
 
 
 # ------------------------------------------------------------------ write side: people stay in control
@@ -206,6 +207,13 @@ def portfolio(client_id: str, window: int = 180, session=Depends(db)):
         "at_risk_value": sum(c["contract"]["annual_value"] for c in ctxs if c["score"]["band"] == "high"),
         "accounts": len(ctxs),
     }
+
+
+# ------------------------------------------------------------------ data sources
+@app.get("/api/clients/{client_id}/sources")
+def sources(client_id: str, session=Depends(db)):
+    client, pack = get_client(client_id, session)
+    return service.sources_overview(session, client_id, pack)
 
 
 # ------------------------------------------------------------------ trust

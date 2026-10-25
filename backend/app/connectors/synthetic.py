@@ -12,7 +12,8 @@ from sqlalchemy import delete
 
 from ..engine import llm
 from ..engine.extract import staff_label
-from ..models import (Account, Action, ActivityPoint, Brief, Contract, Conversation, PlantedLabel, Signal)
+from ..models import (Account, Action, ActivityPoint, Brief, Contract, Conversation, FeatureUsage, Invoice, PlantedLabel,
+                      Signal, Ticket, UsageStat)
 from .base import Connector, match_contracts
 
 FIRST = ["Jonas", "Mia", "Felix", "Sara", "Lukas", "Hannah", "Emre", "Clara", "Tobias", "Nina", "David", "Lea",
@@ -37,7 +38,8 @@ def line_pool(pack: dict) -> dict:
 
 
 def wipe(session, client_id: str):
-    for model in (Action, Brief, Signal, PlantedLabel, Conversation, ActivityPoint, Contract, Account):
+    for model in (Action, Brief, Signal, PlantedLabel, Conversation, ActivityPoint, Contract, Ticket, Invoice, UsageStat,
+                  FeatureUsage, Account):
         session.execute(delete(model).where(model.client_id == client_id))
     session.commit()
 

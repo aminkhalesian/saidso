@@ -48,6 +48,9 @@ def run_client(session, client: Client, connector, use_llm: Optional[bool] = Non
     pack = load_pack(client.pack_id)
     summary = connector.sync(session, client, pack)
     summary["signals"] = extract.run(session, client, pack, use_llm=use_llm)
+    if connector.name == "synthetic":                       # usage, tickets and invoices that match each account's story
+        from .connectors import demo_sources
+        summary.update(demo_sources.add_sources(session, client, pack))
     summary.update(build_outputs(session, client, llm_emails=llm_emails))
     return summary
 

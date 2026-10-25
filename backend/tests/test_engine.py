@@ -121,3 +121,26 @@ def test_drafted_actions_are_plays_with_the_real_quote(api):
         quotes = [s["quote"] for s in detail["signals"]]
         assert any(q in body for q in quotes)                    # the play cites a quote the customer really said
         assert "{" not in body and "}" not in body               # no unfilled placeholders
+
+
+def test_every_account_shows_four_sources_that_agree_with_the_score(api):
+    ov = api.get("/api/clients/brightdesk/overview").json()
+    for row in ov["renewals"][:10]:
+        d = api.get(f"/api/clients/brightdesk/accounts/{row['account_id']}").json()
+        s = d["sources"]
+        assert s["usage"] and s["commercial"] and s["conversations"]["count"] >= 1
+        assert abs(s["usage"]["metric_pct"] - d["score"]["activity_pct"]) <= 0.02       # same windows as the score
+        assert s["commercial"]["annual_value"] == d["contract"]["annual_value"]
+        if s["support"]:
+            assert s["support"]["unresolved"] <= s["support"]["total"]
+
+
+def test_sources_overview_and_csv_export(api, tmp_path):
+    ov = api.get("/api/clients/kranich/sources").json()
+    assert [s["key"] for s in ov["sources"]] == ["usage", "conversations", "support", "commercial"]
+    assert len(ov["files"]) == 8
+    from app.connectors.csv_export import export_csv
+    from app.models import SessionLocal
+    with SessionLocal() as session:
+        written = export_csv(session, "kranich", str(tmp_path))
+    assert set(written) == {f["file"] for f in ov["files"]} and written["tickets.csv"] > 0 and written["invoices.csv"] > 0

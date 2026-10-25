@@ -9,6 +9,7 @@ import { Renewals } from "./pages/Renewals";
 import { Account } from "./pages/Account";
 import { Portfolio } from "./pages/Portfolio";
 import { Trust } from "./pages/Trust";
+import { Sources } from "./pages/Sources";
 import { Analyze } from "./pages/Analyze";
 import { Loading } from "./components/ui";
 
@@ -30,6 +31,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route path="renewals" element={<Renewals />} />
             <Route path="accounts/:accountId" element={<Account />} />
             <Route path="portfolio" element={<Portfolio />} />
+            <Route path="sources" element={<Sources />} />
             <Route path="trust" element={<Trust />} />
             <Route path="analyze" element={<Analyze />} />
           </Route>
