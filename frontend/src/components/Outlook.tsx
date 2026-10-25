@@ -29,7 +29,7 @@ export function Outlook({ o }: { o: any }) {
   const g = o.grr_outlook;
   const gTone = g.pct == null ? undefined : g.pct >= g.benchmark.good ? "low" : "high";
   return (
-    <Panel title="Retention outlook" aside={<span className="text-[12px] text-ink-3">Snapshot of the renewals in view. Revenue figures are an outlook, not reported GRR or NRR.</span>} className="mb-5">
+    <Panel aside={<span className="text-[12px] text-ink-3">Snapshot of the renewals in view. Revenue figures are an outlook, not reported GRR or NRR.</span>} >
       <div className="grid gap-5">
         <Group title="Leadership view" hint="Revenue and customer health">
           <Tile label="Revenue retained, outlook" value={g.pct == null ? "–" : `${g.pct}%`} tone={gTone}

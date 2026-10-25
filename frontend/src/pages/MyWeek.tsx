@@ -4,7 +4,6 @@ import { AlertTriangle, Bell, ChevronDown, Clock, ListChecks } from "lucide-reac
 import { api, euro, euroShort } from "../api";
 import { useAsync, useClient } from "../context";
 import { ActionCard } from "../components/ActionCard";
-import { Outlook } from "../components/Outlook";
 import { SortHead, useSort } from "../components/sort";
 import { BAND_FILL, Chip, ErrorNote, Initials, Kpi, KpiStrip, Loading, Panel, Quote, RiskPill, ScoreRing } from "../components/ui";
 
@@ -50,8 +49,6 @@ export function MyWeek() {
         <Kpi icon={<Clock size={22} strokeWidth={1.8} />} label={`Next ${v.renewal.toLowerCase()}`} value={stats.next ? `${stats.next.days_to_renewal} days` : "–"} chip={stats.next && <Chip>{stats.next.name}</Chip>} />
         <Kpi icon={<ListChecks size={22} strokeWidth={1.8} />} label="Drafted steps waiting" value={data.kpis.open_actions} chip={<Chip>{data.kpis.signals} signals</Chip>} />
       </KpiStrip>
-
-      {data.outlook && <Outlook o={data.outlook} />}
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <Panel className="!p-0">
