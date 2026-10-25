@@ -1,0 +1,38 @@
+# Extra customer lines for the synthetic demo data. They are added AFTER the two lines in packs/saas.yaml,
+# so the sample call on the Analyze page does not change. Placeholders: {co} {nxt} {capacity} {comp}
+champion_departure:
+  - "I've accepted an offer elsewhere, so I'll be gone by the end of the quarter. {nxt} is supposed to pick this up, but we haven't had time for a handover."
+  - "My team is being restructured and I'm moving to a different department, so I won't be your main contact after this month."
+  - "I'll be on parental leave starting in six weeks, and nobody has been named to cover this tool for me."
+  - "Just so you're aware, I handed in my notice yesterday. I'll try to brief {nxt}, but it won't be a proper handover."
+  - "I'm being moved to another project in two weeks, so {nxt} will be your contact from now on, and they haven't used the tool before."
+competitor_mention:
+  - "A colleague showed us a demo of {comp} last week, and a few people on the team were quite impressed."
+  - "Procurement has asked us to get a quote from {comp} so we can compare it with your renewal."
+  - "We've started a pilot with {comp} in the sales team, and if it goes well they'd like to move everyone over."
+  - "Our CTO wants us to consolidate tools, and {comp} came up as the likely replacement for what we do here."
+  - "I'll be honest, we're comparing you against {comp} at the moment and the decision is due next month."
+pricing_complaint:
+  - "The renewal uplift is hard to defend internally. Our CFO asked why we're paying more for the same product."
+  - "We like the product, but at this price per seat I can't justify keeping all {capacity} licences."
+  - "Our finance team compared the cost with what we actually use and said we're overpaying, so we'll be asking for a lower rate."
+  - "The price increase last year was a shock, and I don't think we can accept another one at renewal."
+  - "Frankly, the cost per active user is too high for us right now, and I'll need a better offer to get this approved."
+budget_cut:
+  - "Finance has told every department to reduce software spend by 20% this year, and this renewal is on the list."
+  - "We're in the middle of a hiring freeze and a cost review, so every tool contract is being questioned."
+  - "Our board approved a big savings programme, and any tool without a clear business case is going to be cancelled."
+  - "Procurement now needs three quotes for any contract over ten thousand euros, so the renewal will take much longer than before."
+  - "There's a budget freeze until the new fiscal year, and I honestly don't know if this tool will survive it."
+low_adoption:
+  - "I'll be honest, only about a fifth of the licences are being used, and the rest of the team never got into the habit."
+  - "People tried it for a few weeks and then went back to email, so the dashboards are mostly empty now."
+  - "Nobody on the new team has been trained, and I don't have time to do it, so it's just sitting there."
+  - "Our usage numbers are embarrassing. Most people log in once a month, if that."
+  - "We bought it for the whole department, but only two of us ever open it."
+exec_disengagement:
+  - "My director used to ask about this every week, but she hasn't mentioned it in months, and I think it's fallen off her radar."
+  - "I've asked our VP three times to join the review, and she keeps saying she has no time for this."
+  - "Our sponsor moved to another business unit, and nobody senior is following this project anymore."
+  - "Leadership is focused on other initiatives this year, so I can't get any executive attention on the tool."
+  - "The steering committee has stopped meeting, so there's no one to approve changes or push adoption."

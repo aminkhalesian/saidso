@@ -58,6 +58,16 @@ Copy `backend/app/packs/agency.yaml` to a new file and change:
 Add a client with that `pack_id` in `pipeline.DEMO_CLIENTS`, reseed, and the whole app speaks the new
 industry, including its own Accuracy page. No engine code changes.
 
+## Next-step plays
+Each signal has a short playbook in `backend/app/packs/<id>.yaml` and a full play in `backend/app/plays/<id>.yaml`
+(why now, goal, steps, what to say, how to handle pushback, what to bring, when it is done). "Why now" is filled from the
+real quote and account numbers; the rest is written by people. After editing a play, redraft without re-reading any call:
+
+```
+cd backend && python -m app.cli rebuild-actions
+```
+Extra customer lines for the synthetic data live in `backend/app/plays/lines_<id>.yaml`; they only take effect on a new `seed`.
+
 ## Bring your own data (pilot)
 
 ```bash

@@ -32,6 +32,18 @@ def build_outputs(session, client: Client, window: int = 90, llm_emails: bool = 
     return {"actions": n_actions}
 
 
+def rebuild_actions(session, client: Client, window: int = 90, llm_emails: bool = False) -> dict:
+    """Redraft next steps from the current playbooks without re-reading any call. Signals, scores and briefs
+    stay as they are; drafts are replaced, approved and dismissed actions are kept."""
+    pack = load_pack(client.pack_id)
+    n = 0
+    for ctx in service.contexts(session, client.id, window=window):
+        if ctx["score"]["band"] != "low":
+            n += actions.draft_for(session, client.id, ctx, pack, use_llm_emails=llm_emails)
+    session.commit()
+    return {"actions": n}
+
+
 def run_client(session, client: Client, connector, use_llm: Optional[bool] = None, llm_emails: bool = False) -> dict:
     pack = load_pack(client.pack_id)
     summary = connector.sync(session, client, pack)

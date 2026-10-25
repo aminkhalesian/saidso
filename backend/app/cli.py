@@ -1,5 +1,6 @@
 """Command line: python -m app.cli seed [--llm-transcripts] [--llm-emails]
-                 python -m app.cli import-csv <client_id> <folder>"""
+                 python -m app.cli import-csv <client_id> <folder>
+                 python -m app.cli rebuild-actions [--llm-emails]"""
 import argparse
 
 from . import pipeline
@@ -17,9 +18,15 @@ def main():
     i = sub.add_parser("import-csv", help="load a client's data from a folder of CSV exports")
     i.add_argument("client_id")
     i.add_argument("folder")
+    r = sub.add_parser("rebuild-actions", help="redraft next steps from the current playbooks; keeps signals, scores and decided actions")
+    r.add_argument("--llm-emails", action="store_true", help="LLM personalizes drafted emails")
     a = ap.parse_args()
     if a.cmd == "seed":
         pipeline.seed(a.llm_transcripts, a.llm_emails, a.seed)
+    elif a.cmd == "rebuild-actions":
+        with SessionLocal() as session:
+            for client in session.query(Client).all():
+                print(client.name, pipeline.rebuild_actions(session, client, llm_emails=a.llm_emails))
     else:
         with SessionLocal() as session:
             client = session.get(Client, a.client_id)

@@ -1,11 +1,13 @@
 """Synthetic connector: generates a realistic client dataset from the pack's `synthetic` section.
 Risk signals are planted as exact customer lines and stored as ground truth; decoys are look-alike lines
 that are NOT risks. Billing names are deliberately messy so identity matching has real work to do."""
+from pathlib import Path
 from typing import Optional
 import datetime as dt
 import random
 from concurrent.futures import ThreadPoolExecutor
 
+import yaml
 from sqlalchemy import delete
 
 from ..engine import llm
@@ -25,6 +27,13 @@ def messy(name: str, rng: random.Random) -> str:
     typo = name[:len(name) // 2] + name[len(name) // 2 + 1:]          # one character missing
     variants += [f"{typo} GmbH", typo.upper()]
     return rng.choice(variants)
+
+
+def line_pool(pack: dict) -> dict:
+    """The pack's own lines first (the Analyze sample call uses the first two), then extra lines from plays/lines_<id>.yaml."""
+    path = Path(__file__).resolve().parents[1] / "plays" / f"lines_{pack['id']}.yaml"
+    extra = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
+    return {t: list(lines) + list(extra.get(t, [])) for t, lines in pack["synthetic"]["signal_lines"].items()}
 
 
 def wipe(session, client_id: str):
@@ -51,6 +60,8 @@ class SyntheticConnector(Connector):
         profiles += ["at_risk"] * (n - len(profiles))
         rng.shuffle(profiles)
         staff = f"{syn['product']} {v['owner_role']}"
+        pool = line_pool(pack)
+        lrng = random.Random(f"{self.seed}-{client.id}-lines")   # separate stream: the rest of the demo world stays identical
         specs = []
 
         for i, (company, prof) in enumerate(zip(companies, profiles)):
@@ -94,7 +105,9 @@ class SyntheticConnector(Connector):
             for c in calls:
                 options = [t for t in syn["decoys"] if t not in c["types"]]
                 decoy = [rng.choice(options)] if options and rng.random() < 0.35 else []
-                c["sig_lines"] = [(t, rng.choice(syn["signal_lines"][t]).format(**fill)) for t in c["types"]]
+                for t in c["types"]:
+                    rng.choice(syn["signal_lines"][t])                  # keeps the main random stream unchanged
+                c["sig_lines"] = [(t, lrng.choice(pool[t]).format(**fill)) for t in c["types"]]
                 c["dec_lines"] = [(t, syn["decoys"][t].format(**fill)) for t in decoy]
                 c["cust_lines"] = [l for _, l in c["sig_lines"] + c["dec_lines"]]
                 specs.append(c)

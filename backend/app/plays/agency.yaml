@@ -1,0 +1,114 @@
+# Plays for agency retainers. Placeholders: {account} {contact_first} {owner} {product} {days}
+new_decision_maker:
+  goal: "Earn the new lead's trust before they form their own opinion of the agency."
+  steps:
+    - "Within three working days, ask {contact_first} for an intro to the new lead, or for a handover call with the outgoing sponsor."
+    - "Before the call, research them: previous employer, what they have said publicly, likely priorities."
+    - "Prepare a one-page summary of the last two quarters, framed around their likely goals rather than your history."
+    - "In the intro, ask first (what do you want to change? what does success look like in six months?) and present second."
+    - "Follow up within 24 hours with a short recap and one concrete proposal."
+    - "Assume a review is coming and start the results deck now."
+  say:
+    - "Welcome! I would love 30 minutes to hear your priorities before we show you anything."
+    - "What would you want from your agencies in your first six months?"
+  pushback:
+    - "'I am reviewing all agencies.' Welcome it. Offer data to make the review easy and ask for the criteria and timeline."
+    - "'I want to bring my own agency.' Ask which workstreams they would move and where they see gaps. Keep the focus on measurable results."
+  bring:
+    - "Two-quarter results one-pager"
+    - "Introduction to the team on the account"
+    - "A 90-day plan idea"
+  done_when: "The intro has happened, the new lead's priorities are written down and a next meeting is booked."
+
+agency_review:
+  goal: "Be the easiest agency to say yes to: have the pitch ready before the RFP arrives."
+  steps:
+    - "Ask {contact_first} directly about timing, criteria and who decides. Offer to help structure the process."
+    - "Start the pitch pack now: results against targets, the three wins they care about most, a proposal for the next six months."
+    - "Clarify which work is in scope and which other agencies are invited."
+    - "Bring in your own leadership so a senior name is at the pitch."
+    - "Rehearse, submit on time, and ask for a debrief whatever the outcome."
+  say:
+    - "Reviews are healthy. Can you tell me how it works and what matters most, so we can make it easy for you?"
+    - "What would make you confident to renew?"
+  pushback:
+    - "'We have to treat everyone the same.' Agree, and ask for the brief and criteria in writing."
+    - "'Price is the main thing.' Ask for the budget range and show value per euro with options at different levels."
+  bring:
+    - "Results deck"
+    - "References"
+    - "Pricing options"
+  done_when: "You know the timing, criteria and decision-makers, and the pitch pack is drafted before the RFP lands."
+
+scope_pressure:
+  goal: "Keep the retainer by right-sizing it around the workstreams that drive their results."
+  steps:
+    - "Ask {contact_first} for the budget number, the timing and who decides."
+    - "List current workstreams with their results and rank them by impact per euro."
+    - "Build two options: a core retainer that keeps the best workstreams, and an extended one."
+    - "Be explicit about what drops under a cut, and what the risk is."
+    - "Propose a quarterly review so scope can grow back when budget returns."
+  say:
+    - "Thanks for being upfront. Which workstreams matter most to you? Let's right-size around those."
+  pushback:
+    - "'Cut it by a third across the board.' Show the effect per workstream and propose cutting low-impact work first."
+    - "'We will do content in-house.' Offer a transition: strategy and quality review for the team, with training."
+  bring:
+    - "Workstream results table"
+    - "Two options with prices"
+  done_when: "Two options are presented and the client has chosen one or set a decision date. No silent scope cut."
+
+value_doubt:
+  goal: "Rebuild trust in the results with evidence and two concrete fixes."
+  steps:
+    - "Pull KPIs against the targets agreed at kickoff, for the last two quarters."
+    - "Be honest about where you missed and why."
+    - "Prepare two concrete fixes for the weakest channel, with a timeline and the effect you expect."
+    - "Hold a results review. If {contact_first}'s boss asked about ROI, give {contact_first} a one-page answer they can forward."
+    - "Agree two or three metrics you will report every month."
+  say:
+    - "You are right to ask. Let me show where we hit targets, where we did not, and what we will change."
+  pushback:
+    - "'The ROI isn't clear.' Agree how to measure it together and what a fair baseline is."
+    - "'Another agency promises more.' Compare on measurable outcomes and ask about their assumptions."
+  bring:
+    - "KPI against target table"
+    - "Two fixes with timeline"
+    - "One-page ROI answer"
+  done_when: "The review has happened, the fixes are agreed and monthly reporting metrics are set."
+
+approval_delays:
+  goal: "Unblock the stuck deliverables and remove the cause, instead of only chasing."
+  steps:
+    - "List everything waiting on the client, since when, and what each item blocks."
+    - "Ask {contact_first} what is causing the delay: legal, a reorg, capacity?"
+    - "Propose a 20-minute weekly approval slot, batch reviews and clear deadlines."
+    - "If the sponsor is blocked internally, ask who can unblock and how you can help (a short summary for legal, for example)."
+    - "Tell your own team how the delay changes campaign dates."
+  say:
+    - "I know things are busy. Could we pick a 20-minute weekly slot just to clear approvals?"
+  pushback:
+    - "'Legal is slow.' Ask for the legal contact and send a short summary to speed their review."
+    - "'We are in a reorg.' Ask who the new approver is."
+  bring:
+    - "List of open items with dates"
+    - "Impact on campaign dates"
+    - "A proposed approval routine"
+  done_when: "The approval slot is booked and every open item has an owner and a date."
+
+payment_delays:
+  goal: "Resolve the invoice issue without hurting the relationship, and check whether it is really a budget signal."
+  steps:
+    - "Ask your finance team for the exact status: which invoices, amounts, days overdue, any dispute."
+    - "Find the right contact in the client's accounts payable."
+    - "Ask {contact_first} to confirm the expected payment date in writing."
+    - "Check whether the delay is a budget signal (see the other signals on this account) and tell your lead."
+    - "Look up what your contract says about work continuing while an invoice is overdue."
+  say:
+    - "Quick admin question: where is the October invoice in your process, and when should we expect it?"
+  pushback:
+    - "'Finance is holding payments until the budget is signed.' Ask for the expected date and offer to re-issue or split the invoice if that helps."
+  bring:
+    - "List of open invoices and PO numbers"
+    - "Payment terms from the contract"
+  done_when: "Accounts payable has confirmed a payment date in writing."

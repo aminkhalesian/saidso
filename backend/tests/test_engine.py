@@ -99,3 +99,25 @@ def test_api_account_actions_feedback_trust_analyze(api):
     sample = api.get("/api/clients/kranich/sample-transcript").json()["transcript"]
     res = api.post("/api/clients/kranich/analyze", json={"transcript": sample}).json()
     assert res["signals"] and all(s["quote"] in sample for s in res["signals"])
+
+
+def test_every_signal_has_a_full_play():
+    from app.engine.actions import load_plays
+    for p in list_packs():
+        plays = load_plays(p["id"])
+        assert set(plays) == set(p["signals"]), f"{p['id']}: plays must cover every signal"
+        for key, play in plays.items():
+            for field in ("goal", "steps", "say", "pushback", "bring", "done_when"):
+                assert play[field], f"{p['id']}.{key} is missing {field}"
+
+
+def test_drafted_actions_are_plays_with_the_real_quote(api):
+    ov = api.get("/api/clients/brightdesk/overview").json()
+    assert ov["this_week"], "expected at least one account needing attention"
+    for row in ov["this_week"]:
+        body = row["action"]["body"]
+        assert body.startswith("WHY NOW\n") and "STEPS" in body and "IF THEY PUSH BACK" in body
+        detail = api.get(f"/api/clients/brightdesk/accounts/{row['action']['account_id']}").json()
+        quotes = [s["quote"] for s in detail["signals"]]
+        assert any(q in body for q in quotes)                    # the play cites a quote the customer really said
+        assert "{" not in body and "}" not in body               # no unfilled placeholders

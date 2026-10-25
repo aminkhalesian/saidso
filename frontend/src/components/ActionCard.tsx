@@ -9,6 +9,48 @@ const KIND = {
   meeting: { icon: CalendarDays, label: "Meeting" },
 } as const;
 
+/** A play is plain text in sections (WHY NOW, STEPS, ...). Older drafts without sections render as one block. */
+function parsePlay(body: string): { head: string; lines: string[] }[] | null {
+  if (!body.startsWith("WHY NOW\n")) return null;
+  return body.split(/\n\n(?=[A-Z][A-Z ]+\n)/).map((block) => {
+    const [head, ...lines] = block.split("\n");
+    return { head, lines };
+  });
+}
+
+function PlayBody({ body }: { body: string }) {
+  const sections = parsePlay(body);
+  if (!sections) return <p className="whitespace-pre-line rounded-md bg-paper p-2.5 text-sm leading-relaxed text-ink-2">{body}</p>;
+  return (
+    <div className="space-y-3.5 rounded-md bg-paper p-3 text-sm leading-relaxed text-ink-2">
+      {sections.map(({ head, lines }) => {
+        const listy = lines.length > 0 && lines.every((l) => /^(- |\d+\. )/.test(l));
+        const email = head === "DRAFT EMAIL";
+        return (
+          <section key={head}>
+            <h4 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-3">{head === "WHY NOW" ? "Why now" : head.charAt(0) + head.slice(1).toLowerCase()}</h4>
+            {listy ? (
+              <ul className="space-y-1">
+                {lines.map((l, i) => {
+                  const m = l.match(/^(\d+)\. (.*)$/);
+                  return (
+                    <li key={i} className="flex gap-2">
+                      <span className="w-4 shrink-0 text-right text-ink-3">{m ? m[1] : "•"}</span>
+                      <span>{m ? m[2] : l.replace(/^- /, "")}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className={`whitespace-pre-line ${email ? "rounded-md border border-line bg-panel p-2.5" : head === "WHY NOW" ? "text-ink" : ""}`}>{lines.join("\n")}</p>
+            )}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ActionCard({ action, compact = false, onChange }: { action: any; compact?: boolean; onChange?: (a: any) => void }) {
   const [a, setA] = useState(action);
   const [editing, setEditing] = useState(false);
@@ -67,13 +109,13 @@ export function ActionCard({ action, compact = false, onChange }: { action: any;
         <div className="px-3.5 pt-2.5">
           {editing ? (
             <textarea
-              className="h-40 w-full rounded-md border border-line bg-paper p-2.5 text-sm leading-relaxed"
+              className="h-80 w-full rounded-md border border-line bg-paper p-2.5 text-sm leading-relaxed"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               aria-label="Edit draft"
             />
           ) : (
-            <p className="whitespace-pre-line rounded-md bg-paper p-2.5 text-sm leading-relaxed text-ink-2">{a.body}</p>
+            <PlayBody body={a.body} />
           )}
         </div>
       )}
