@@ -8,7 +8,11 @@ import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app import pipeline  # noqa: E402
-from app.engine import brief, extract, identity, llm  # noqa: E402
+from sqlalchemy import select  # noqa: E402
+
+from app import service  # noqa: E402
+from app.engine import actions, brief, extract, identity, llm  # noqa: E402
+from app.models import ActivityPoint, Signal, SessionLocal  # noqa: E402
 from app.main import app  # noqa: E402
 from app.packs import list_packs, load_pack  # noqa: E402
 
@@ -48,10 +52,12 @@ def test_grounding_drops_invented_and_staff_quotes():
 
 
 def test_brief_validation_rejects_bad_citations():
-    ids = {"E1", "E2"}
-    ok = {"sentences": [{"text": "Risky.", "evidence": ["E1"]}], "next_step": {"text": "Call.", "evidence": ["E2"]}}
-    bad = {"sentences": [{"text": "Risky.", "evidence": ["E9"]}], "next_step": {"text": "Call.", "evidence": []}}
-    assert brief.validate(ok, ids) and not brief.validate(bad, ids)
+    ev = [{"id": "E1", "text": "x"}, {"id": "E2", "text": "y"}]
+    ok = {"sentences": [{"text": "Risky.", "evidence": ["E1"]}], "next_step": {"text": "Call.", "evidence": ["E2"]},
+          "assessment": {"text": "Watch it.", "evidence": ["E1"]}}
+    bad = {"sentences": [{"text": "Risky.", "evidence": ["E9"]}], "next_step": {"text": "Call.", "evidence": []},
+           "assessment": {"text": "Watch it.", "evidence": ["E1"]}}
+    assert brief.validate(ok, ev) and not brief.validate(bad, ev)
 
 
 def test_identity_matching_handles_messy_names():
@@ -144,3 +150,108 @@ def test_sources_overview_and_csv_export(api, tmp_path):
     with SessionLocal() as session:
         written = export_csv(session, "kranich", str(tmp_path))
     assert set(written) == {f["file"] for f in ov["files"]} and written["tickets.csv"] > 0 and written["invoices.csv"] > 0
+
+
+# ------------------------------------------------------------------ one complete customer journey
+
+
+@pytest.fixture(scope="module")
+def session(api):
+    with SessionLocal() as s:
+        yield s
+
+
+def _target(session):
+    """An account that is both losing usage and has a budget concern on a call."""
+    for ctx in service.contexts(session, "brightdesk"):
+        if ctx["score"]["activity_pct"] <= -0.08 and any(s["signal_type"] == "budget_cut" for s in ctx["signals"]) \
+                and ctx["score"]["band"] != "low":
+            return ctx["account"]["id"]
+    pytest.fail("the demo data has no account with falling usage and a budget concern")
+
+
+def _full(session, account_id):
+    ctx = service.context(session, "brightdesk", account_id)
+    service.with_sources(session, "brightdesk", ctx, PACK)
+    payload, source = brief.make(ctx, PACK)
+    return ctx, payload
+
+
+def test_both_risks_are_found_and_both_move_the_score(session):
+    ctx, payload = _full(session, _target(session))
+    comp = {c["label"]: c["points"] for c in ctx["score"]["components"]}
+    assert comp["Conversation signals"] > 0
+    assert comp["Daily active users trend"] > 0                  # usage, from the activity data
+    labels = {d["title"] for d in payload["drivers"]}
+    assert "Budget pressure" in labels and "Daily active users" in labels
+
+
+def test_every_statement_cites_real_evidence_and_no_numbers_are_invented(session):
+    ctx, payload = _full(session, _target(session))
+    ev = {e["id"]: e for e in payload["evidence"]}
+    assert brief.validate(payload, payload["evidence"])
+    budget = next(e for e in ev.values() if e["kind"] == "signal" and e["signal_type"] == "budget_cut")
+    driver = next(d for d in payload["drivers"] if d["title"] == "Budget pressure")
+    assert budget["id"] in driver["evidence"] and budget["quote"] in budget["text"]
+    for q in payload["plan"]["questions"] + payload["plan"]["interventions"]:
+        assert q["evidence"] and set(q["evidence"]) <= set(ev)
+
+
+def test_ai_output_with_an_invented_number_or_probability_is_rejected(session):
+    ctx, payload = _full(session, _target(session))
+    ev = payload["evidence"]
+    ok = {k: payload[k] for k in ("sentences", "next_step", "drivers", "reassuring", "assessment")}
+    assert brief.validate(ok, ev)
+    bad = {**ok, "assessment": {"text": "There is a 87% chance they churn.", "evidence": [ev[0]["id"]]}}
+    assert not brief.validate(bad, ev)
+    bad = {**ok, "assessment": {"text": "Revenue at risk is €99,999.", "evidence": [ev[0]["id"]]}}
+    assert not brief.validate(bad, ev)
+    bad = {**ok, "assessment": {"text": "Looks risky.", "evidence": ["E999"]}}
+    assert not brief.validate(bad, ev)
+
+
+def test_ai_path_is_used_when_valid_and_template_when_not(session, monkeypatch):
+    ctx, payload = _full(session, _target(session))
+    good = {k: payload[k] for k in ("sentences", "next_step", "drivers", "reassuring", "assessment")}
+    monkeypatch.setattr(llm, "enabled", lambda: True)
+    plan = payload["plan"]
+    monkeypatch.setattr(llm, "chat_json", lambda s, u, schema, name, **kw: plan if name == "retention_plan" else good)
+    _, source = brief.make(ctx, PACK)
+    assert source == "llm"
+    bad = {**good, "assessment": {"text": "Churn probability is 87%.", "evidence": [good["drivers"][0]["evidence"][0]]}}
+    monkeypatch.setattr(llm, "chat_json", lambda s, u, schema, name, **kw: plan if name == "retention_plan" else bad)
+    _, source = brief.make(ctx, PACK)
+    assert source == "template"
+
+
+def test_playbook_addresses_this_customers_situation(session):
+    aid = _target(session)
+    ctx, payload = _full(session, aid)
+    plan = payload["plan"]
+    quote = next(e["quote"] for e in payload["evidence"] if e["kind"] == "signal" and e["signal_type"] == "budget_cut")
+    assert quote in plan["problem"]["text"]
+    assert len(plan["questions"]) == 3 and len(plan["interventions"]) == 2 and plan["followup"]["text"]
+    body = actions.play_body(actions.load_plays("saas")["budget_cut"],
+                             next(s for s in ctx["signals"] if s["signal_type"] == "budget_cut"), ctx, PACK, plan=plan)
+    for head in ("MAIN PROBLEM", "OBJECTIVE", "QUESTIONS TO ASK", "RETENTION OPTIONS", "FOLLOW-UP"):
+        assert head in body
+    assert quote in body and "[E" in body                          # facts and evidence ids are visible to the CSM
+
+
+def test_changing_the_data_changes_the_assessment(session):
+    aid = _target(session)
+    before_ctx, before = _full(session, aid)
+    # usage recovers and the budget concern is dismissed by the CSM
+    pts = session.scalars(select(ActivityPoint).where(ActivityPoint.account_id == aid).order_by(ActivityPoint.day)).all()
+    base = sum(p.value for p in pts[:45]) / 45
+    for p in pts[-14:]:
+        p.value = base * 1.1
+    for s in session.scalars(select(Signal).where(Signal.account_id == aid)):
+        if s.signal_type == "budget_cut":
+            s.feedback = "dismissed"
+    session.commit()
+    after_ctx, after = _full(session, aid)
+    assert after_ctx["score"]["score"] < before_ctx["score"]["score"]
+    assert "Budget pressure" not in {d["title"] for d in after["drivers"]}
+    assert after["plan"] is None or after["plan"]["problem"]["text"] != before["plan"]["problem"]["text"]
+    assert any(r["text"].startswith("Daily active users up") for r in after["reassuring"])

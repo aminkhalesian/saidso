@@ -12,7 +12,7 @@ const KIND = {
 /** A play is plain text in sections (WHY NOW, STEPS, ...). Older drafts without sections render as one block. */
 function parsePlay(body: string): { head: string; lines: string[] }[] | null {
   if (!body.startsWith("WHY NOW\n")) return null;
-  return body.split(/\n\n(?=[A-Z][A-Z ]+\n)/).map((block) => {
+  return body.split(/\n\n(?=[A-Z][A-Z -]+\n)/).map((block) => {
     const [head, ...lines] = block.split("\n");
     return { head, lines };
   });

@@ -102,3 +102,13 @@ the hackathon (synthetic data only).
 - Words on screen come from the industry pack (`backend/app/packs/*.yaml` `vocabulary`), so test every change in
   both workspaces: Brightdesk (SaaS) and Kranich Studio (agency).
 - `docs/screenshots` shows the first-pass screens from a live AI run (Portfolio is from offline data).
+
+## Cross-source briefs and retention plans
+
+`engine/brief.py` builds one numbered evidence list per account from every source (calls, usage, support tickets, invoices, contract),
+each marked as risk, reassuring or neutral. The AI returns main risk drivers, why each matters, reassuring or contradictory evidence and an
+overall assessment. Every statement must cite evidence ids; a reply with an unknown id, a number that is not in the evidence, or a churn
+probability is rejected and the account falls back to a template built from the same evidence.
+Medium and high risk accounts also get a conversation plan (main problem, objective, three questions, two retention options, follow-up),
+shown on the top drafted action. Nothing is sent: a CSM approves every customer-facing action.
+The score counts good news too (growing usage, invoices paid on time, no open complaints lower it). Weights live in `packs/*.yaml`.

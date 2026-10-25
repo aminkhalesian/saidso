@@ -18,6 +18,15 @@ champion_departure:
     - "Usage trend for the last 90 days"
     - "Top three workflows and who uses them"
     - "Renewal date and current terms"
+  why: "When the sponsor leaves, the next owner decides the renewal without knowing the history."
+  questions:
+    - "Who will own {product} for your team after {contact_first} leaves, and what do they already know about it?"
+    - "Which two or three workflows would hurt most if they stopped working during the handover?"
+    - "Who else on your side relies on {product} and should be part of the renewal conversation?"
+  interventions:
+    - "A joint handover session with the successor, built around the workflows the team already runs."
+    - "A short results summary the successor can use to justify the renewal internally."
+  followup: "Book the renewal call with the successor within a week of their start date."
   done_when: "A named successor and a second contact are on the account, and a call with the successor is booked before {contact_first}'s last day."
 
 competitor_mention:
@@ -38,6 +47,15 @@ competitor_mention:
     - "Comparison of their key workflows"
     - "Usage by team"
     - "A reference customer in the same segment, if you have one"
+  why: "A live evaluation means the renewal is already contested, and silence now usually loses it."
+  questions:
+    - "What made your team start looking at alternatives?"
+    - "Which two or three requirements decide the choice, and when is the decision due?"
+    - "Who is running the comparison, and what would they need to see from us?"
+  interventions:
+    - "A side-by-side session on the customer's own workflows, covering only their must-haves."
+    - "A reference call with a customer in the same segment who evaluated the same alternative."
+  followup: "Agree a decision date and book a check-in the day after their trial ends."
   done_when: "You know the trigger, the decision-maker and the deadline, and a comparison session is booked."
 
 pricing_complaint:
@@ -57,6 +75,15 @@ pricing_complaint:
     - "Usage per team"
     - "One-page value summary"
     - "Two options with prices"
+  why: "Price objections voiced before renewal are usually negotiating positions that value proof can answer."
+  questions:
+    - "Which part of the price feels out of line with the value you get?"
+    - "Which features or teams account for most of your real usage?"
+    - "If budget is fixed, which package size would fit and still cover your key workflows?"
+  interventions:
+    - "A right-sized plan that keeps the workflows they use and removes what they do not."
+    - "A one-page value summary with their own usage, ahead of the pricing talk."
+  followup: "Send the value summary and a right-sized option before the next call, and agree a date to decide."
   done_when: "They have seen two options and know the next date. No new price ask appears at renewal."
 
 budget_cut:
@@ -77,6 +104,15 @@ budget_cut:
     - "Procurement forms and security documents"
     - "Usage and cost per active user"
     - "Fallback option"
+  why: "A cut budget means the renewal needs a smaller or better justified scope, or it will be dropped."
+  questions:
+    - "How has the budget change affected which tools your team can keep?"
+    - "What is the approval process for a renewal at this size, and who signs it off?"
+    - "Which parts of {product} could you not do without, and which are nice to have?"
+  interventions:
+    - "A reduced scope or seat count that fits the new budget and protects the core workflows."
+    - "Annual vs. monthly or phased terms that spread the cost, if your policy allows it."
+  followup: "Get the renewal onto procurement's list now and confirm the approval steps and dates in writing."
   done_when: "Procurement steps and dates are known, paperwork is sent and the fallback option is ready."
 
 low_adoption:
@@ -96,6 +132,15 @@ low_adoption:
   bring:
     - "Usage by user"
     - "A short how-to for the two or three workflows"
+  why: "Low usage is the most common reason a renewal is not renewed, even when nobody has complained."
+  questions:
+    - "Which workflows did the team use before and has stopped using?"
+    - "What gets in the way of using {product} day to day?"
+    - "Who on the team would benefit most from a short re-onboarding?"
+  interventions:
+    - "A targeted re-onboarding session for the teams that stopped using it."
+    - "A named internal champion with a 30-day adoption goal."
+  followup: "Review usage together in two weeks and book the renewal talk once usage recovers."
   done_when: "The session has happened, a usage target is agreed and the day-14 check-in is booked."
 
 exec_disengagement:
@@ -113,4 +158,13 @@ exec_disengagement:
     - "'It isn't a priority anymore.' Ask what is a priority, and how {product} could connect to it."
   bring:
     - "Executive one-pager: results, cost, adoption, risks"
+  why: "When the executive sponsor stops showing up, the renewal loses the person who defends it."
+  questions:
+    - "What are your leadership's top priorities this quarter, and where does {product} fit?"
+    - "Who now makes the decisions about tools like this?"
+    - "What would make a short review with your leadership worthwhile?"
+  interventions:
+    - "A short executive review that ties the results to their stated priorities."
+    - "A second sponsor introduced through the day-to-day users."
+  followup: "Book a 30-minute executive review before the renewal and confirm a named sponsor."
   done_when: "The executive has replied or named a delegate, and a briefing is on the calendar."

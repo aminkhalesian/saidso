@@ -63,6 +63,12 @@ def contexts(session, client_id: str, window: Optional[int] = None, today: Optio
     return sorted(out, key=lambda x: (-x["score"]["score"], x["score"]["days_to_renewal"]))
 
 
+def with_sources(session, client_id: str, ctx: dict, pack: dict) -> dict:
+    """Attach usage, support and commercial evidence so briefs and plans can use every source."""
+    ctx["sources"] = account_sources(session, client_id, ctx["account"]["id"], pack, ctx)
+    return ctx
+
+
 def context(session, client_id: str, account_id: int) -> Optional[dict]:
     return next((c for c in contexts(session, client_id) if c["account"]["id"] == account_id), None)
 
