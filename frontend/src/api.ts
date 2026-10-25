@@ -1,6 +1,40 @@
+import snapshot from "snapshot-data";
+
 export type Band = "high" | "medium" | "low";
 
+// Offline copy: every page reads from a snapshot of the API taken when the file was made.
+export const STATIC = import.meta.env.VITE_STATIC === "1";
+
+function findAction(id: number): any {
+  for (const [k, v] of Object.entries<any>(snapshot)) {
+    if (k.endsWith("/overview")) {
+      for (const r of v.this_week ?? []) if (r.action?.id === id) return r.action;
+    } else if (/\/accounts\/\d+$/.test(k)) {
+      const a = (v.actions ?? []).find((x: any) => x.id === id);
+      if (a) return a;
+    }
+  }
+  return null;
+}
+
+async function staticReq<T>(path: string, init?: RequestInit): Promise<T> {
+  if (!init?.method || init.method === "GET") {
+    const hit = (snapshot as Record<string, any>)[path.split("?")[0]];
+    if (hit === undefined) throw new Error("404: not part of the offline copy");
+    return hit as T;
+  }
+  const body = init.body ? JSON.parse(String(init.body)) : {};
+  const m = path.match(/\/actions\/(\d+)$/);
+  if (m) {                                             // decisions only live in this browser tab
+    const a = findAction(Number(m[1])) ?? { id: Number(m[1]) };
+    return { ...a, status: body.status, body: body.body ?? a.body } as T;
+  }
+  if (/\/signals\//.test(path)) return { ok: true, feedback: body.feedback } as T;
+  throw new Error("Not available in the offline copy. Run the live app to analyse a new call.");
+}
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
+  if (STATIC) return staticReq<T>(path, init);
   const res = await fetch(`/api${path}`, {
     headers: { "Content-Type": "application/json" },
     ...init,

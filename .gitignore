@@ -4,3 +4,6 @@ __pycache__/
 *.db
 node_modules/
 frontend/dist/
+frontend/dist-static/
+frontend/static-snapshot.json
+saidso-offline.html
