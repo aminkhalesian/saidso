@@ -1,0 +1,135 @@
+id: agency
+name: Agency retainers
+industry: Agencies and consultancies
+
+vocabulary:
+  account: Client
+  accounts: Clients
+  contract: Retainer
+  renewal: Retainer renewal
+  capacity: Retainer hours / month
+  activity: Billable hours logged per day
+  value: Monthly retainer
+  owner_role: Account manager
+
+score:
+  activity_drop_max: 30
+  capacity_cut_max: 15
+  signals_max: 45
+  urgency_max: 10
+  bands: {high: 50, medium: 25}
+
+signals:
+  new_decision_maker:
+    label: New decision-maker
+    weight: 17
+    definition: The client has a new marketing lead, CMO, or sponsor, or the current sponsor says they are leaving or handing over the relationship.
+    keywords: '\b(new cmo|new head|joined|starts next|leaving|taking over|new marketing lead)\b'
+    playbook:
+      kind: meeting
+      title: Set up an intro meeting with {account}'s new decision-maker
+      body: Ask {contact_first} for a 30-minute intro with the new lead, and bring a one-page summary of results from the last two quarters.
+  agency_review:
+    label: Agency review / pitch
+    weight: 16
+    definition: The client is reviewing agencies, has sent or plans to send a request for proposal, or is talking to other agencies about this work. Past reviews won by this agency do not count.
+    keywords: '\b(rfp|pitch|other agencies|agency review|tender)\b'
+    playbook:
+      kind: task
+      title: Prepare a results deck before {account}'s agency review
+      body: Pull campaign results, the three wins the client cares about most, and a proposal for the next 6 months before procurement starts the review.
+  scope_pressure:
+    label: Scope or budget pressure
+    weight: 14
+    definition: The client wants to reduce the retainer, cut scope, freeze marketing spend, or move work in-house.
+    keywords: '\b(cut (the )?scope|reduce the retainer|in-house|in house|freeze|budget)\b'
+    playbook:
+      kind: email
+      title: Propose a right-sized retainer to {account}
+      body: |
+        Hi {contact_first},
+
+        Thanks for being open about the budget situation. Rather than cutting across the board, could we look together at which workstreams drive the most results for you? I'll bring a lighter option that keeps those running.
+
+        Best,
+        {owner}
+  value_doubt:
+    label: Results doubt
+    weight: 13
+    definition: The client questions the results, return on investment, or quality of the agency's work.
+    keywords: '\b(results|roi|not seeing|underwhelming|value)\b'
+    playbook:
+      kind: task
+      title: Build a results review for {account}
+      body: Compare this quarter's KPIs with the targets agreed at kickoff and prepare two concrete fixes for the weakest channel.
+  approval_delays:
+    label: Approvals stalled
+    weight: 10
+    definition: Feedback, approvals, or briefings from the client have slowed down or stopped, and deliverables are stuck waiting on them.
+    keywords: '\b(waiting on|stuck|no feedback|haven''t approved|on hold)\b'
+    playbook:
+      kind: email
+      title: Unblock stuck approvals with {account}
+      body: |
+        Hi {contact_first},
+
+        A few deliverables have been waiting on feedback for a while. Would a 20-minute review call this week help us get them over the line? I can send a short summary of what's open beforehand.
+
+        Best,
+        {owner}
+  payment_delays:
+    label: Late payments
+    weight: 9
+    definition: The client says invoices are being delayed, paused, or questioned by finance.
+    keywords: '\b(invoice|invoices|payment|accounts payable)\b'
+    playbook:
+      kind: task
+      title: Check open invoices for {account} with finance
+      body: Ask finance for the payment status of open invoices and agree on one person to raise it with the client's accounts payable.
+
+synthetic:
+  product: Kranich Studio
+  segments: [Consumer goods, Retail, Travel, Food & drink, Fashion, Fintech, Mobility, Health & wellness]
+  plans: [Content retainer, Performance retainer, Brand retainer]
+  roles: [Marketing Manager, Head of Brand, Growth Lead, Communications Manager, E-commerce Lead]
+  capacity: [40, 160]
+  unit_price: [95, 110, 125, 140]
+  activity_ratio: [0.035, 0.05]
+  fill:
+    comp: [another agency, two other agencies, a performance agency in Hamburg]
+  companies: [Amselgrund Kaffee, Blaufeder Kosmetik, Dachsberg Brauerei, Eisvogel Reisen, Federleicht Sportswear,
+              Grünspan Möbel, Hasenheide Bakery, Igelhof Organics, Jadebucht Seafood, Kolibri Payments,
+              Lerchenfeld Skincare, Marderweg Bikes, Nachtigall Hotels, Otterbach Spirits, Pfauenauge Eyewear,
+              Quarzsand Ceramics, Rabenschwarz Coffee Roasters, Schwanensee Ballet Shoes, Taubenschlag Living, Uhuweg Outdoor,
+              Vogelsang Wines, Wiesel Mobility, Zaunkönig Kids, Auerhahn Tea, Buchfink Books]
+  titles: [Monthly status, Campaign review, Quarterly business review, Briefing call, Retainer check-in]
+  signal_lines:
+    new_decision_maker:
+      - "Just so you know, we have a new CMO who joined last week, and she wants to look at every agency relationship herself."
+      - "I'm leaving {co} in March, and {nxt} will be taking over marketing from our side."
+    agency_review:
+      - "Procurement wants us to run an agency review before the retainer renews, so you'll probably get an RFP in the next few weeks."
+      - "Honestly, we've had a couple of intro calls with {comp} about the social work."
+    scope_pressure:
+      - "We need to reduce the retainer for next year, probably by a third, because our marketing budget got frozen."
+      - "Our board wants us to bring more of the content work in-house, so we might cut the scope after the summer."
+    value_doubt:
+      - "I have to be honest, we're not seeing the results we hoped for from the paid campaigns."
+      - "My boss asked me what the ROI of the retainer actually is, and I struggled to answer."
+    approval_delays:
+      - "Sorry, I know the new campaign is stuck waiting on us. Legal hasn't approved anything in three weeks."
+      - "Things are on hold on our side until the reorg is done, so I can't give you feedback on the drafts yet."
+    payment_delays:
+      - "Finance told me they're holding the last two invoices until the new budget is signed off."
+      - "Our accounts payable team is behind, so the payment for October will be late, sorry."
+  decoys:
+    agency_review: "We ran a pitch two years ago and you won it, and nobody here wants to go through that again."
+    new_decision_maker: "Our old head of brand left last year, but I've run this relationship since then and it's going well."
+    scope_pressure: "Budget planning for next year is done and your retainer is in it at the same level."
+    value_doubt: "The results from the spring campaign were great, the team keeps sharing the numbers."
+  owner_open: ["Thanks for jumping on. How's everything on your side?", "Hi! Good to catch up. How has the month been?"]
+  owner_mid: ["Okay, thanks for flagging that.", "Got it, that's useful to know.", "Understood. Anything else we should plan for?", "Let me write that down.", "Makes sense. Shall we go through the content calendar next?"]
+  owner_close: ["Great, I'll send a recap with next steps today.", "Thanks, I'll share the updated plan by Friday."]
+  neutral: ["The newsletter redesign went down really well internally.", "We're busy with the trade fair prep this month.",
+            "Can you send the updated content calendar before Thursday?", "The new landing page is live and looks great.",
+            "Sounds good, let's keep the Tuesday slot for reviews."]

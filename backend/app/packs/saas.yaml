@@ -1,0 +1,136 @@
+id: saas
+name: B2B SaaS renewals
+industry: Software (B2B SaaS)
+
+vocabulary:
+  account: Customer
+  accounts: Customers
+  contract: Subscription
+  renewal: Renewal
+  capacity: Seats
+  activity: Daily active users
+  value: MRR
+  owner_role: CSM
+
+score:
+  activity_drop_max: 30     # a 30% drop in activity earns the full 30 points
+  capacity_cut_max: 15      # a 15% seat cut earns the full 15 points
+  signals_max: 45
+  urgency_max: 10
+  bands: {high: 50, medium: 25}
+
+signals:
+  champion_departure:
+    label: Champion leaving
+    weight: 18
+    definition: The main customer contact or sponsor says they are leaving the company, changing roles, or handing the account to someone else.
+    keywords: '\b(leaving|last day|take over|taking over|left)\b'
+    playbook:
+      kind: email
+      title: Ask {contact_first} for an intro to their successor
+      body: |
+        Hi {contact_first},
+
+        Thanks for the heads-up that you're moving on. Before you go, could you introduce me to whoever will own {product} on your side? I'd like to walk them through what your team has built so far, so nothing gets lost in the handover.
+
+        Best,
+        {owner}
+  competitor_mention:
+    label: Competitor evaluation
+    weight: 15
+    definition: The customer is currently evaluating, trialing, or being asked to look at a competing product. Past evaluations already decided in the vendor's favour do not count.
+    keywords: '\b(vantora|cleversuite|flowbird)\b'
+    playbook:
+      kind: meeting
+      title: Book a side-by-side review with {account}
+      body: Offer a 30-minute session comparing the workflows {account} uses most, and ask what triggered the evaluation.
+  pricing_complaint:
+    label: Pricing pushback
+    weight: 12
+    definition: The customer currently says the price is too high, questions value for money, or signals they will ask for a discount at renewal. Resolved past discussions do not count.
+    keywords: '\b(price|pricing|discount|steep|expensive)\b'
+    playbook:
+      kind: task
+      title: Prepare a value summary and right-sized option for {account}
+      body: Pull usage per team, list the three workflows they rely on most, and prepare one option with fewer seats before the renewal call.
+  budget_cut:
+    label: Budget pressure
+    weight: 14
+    definition: The customer mentions budget cuts, spending freezes, layoffs, or a procurement review that puts this tool at risk.
+    keywords: '\b(budgets?|freeze|layoffs?|procurement)\b'
+    playbook:
+      kind: task
+      title: Get {account}'s renewal onto procurement's list early
+      body: Ask {contact_first} who signs off in procurement and what they need from us, and send the renewal paperwork 60 days early.
+  low_adoption:
+    label: Low adoption
+    weight: 10
+    definition: The customer says the team isn't using the product, stopped using it, rolled it back, or can't get value from it.
+    keywords: '(stopped logging in|nobody (really )?uses|not using|went back to)'
+    playbook:
+      kind: email
+      title: Offer {account} a short re-onboarding
+      body: |
+        Hi {contact_first},
+
+        You mentioned the team hasn't been getting much out of {product} lately. Could I run a 30-minute session with them to set up the two or three workflows that matter most to you? Happy to work around your schedule.
+
+        Best,
+        {owner}
+  exec_disengagement:
+    label: Exec disengaged
+    weight: 11
+    definition: An executive sponsor stopped attending or responding, or leadership says the tool is no longer a priority.
+    keywords: '(stopped responding|not a priority|isn''t a priority|anyone senior)'
+    playbook:
+      kind: task
+      title: Ask your leadership to reach out exec-to-exec at {account}
+      body: Brief your VP on the account and ask them to send a short note to {account}'s leadership before the renewal.
+
+synthetic:
+  product: Brightdesk
+  segments: [Logistics, Retail, Healthcare, Manufacturing, Software, Hospitality, Energy, Professional services, Education, Finance]
+  plans: [Team, Business]
+  roles: [Head of Operations, Customer Support Lead, Marketing Manager, Ops Manager, Head of Sales, Team Lead]
+  capacity: [10, 120]
+  unit_price: [29, 35, 39, 45]
+  activity_ratio: [0.55, 0.85]
+  fill:
+    comp: [Vantora, Cleversuite, Flowbird]
+  companies: [Alpenquell Getränke, Brandt & Sohn Maschinenbau, Celsia Health, Dunewood Retail, Elbtal Energie,
+              Fernweh Reisen, Glasblau Studios, Hafenkante Foods, Isarwerk Software, Juniper Lane Interiors,
+              Kieselstein Bau, Lindgrün Organics, Mondschein Hotels, Nordlicht Logistik, Oberhaus Legal,
+              Pixelhain Games, Quellgrund Water, Rotfuchs Mobility, Sandkorn Education, Tannenhof Pharma,
+              Uferwerk Events, Vierkant Architects, Weißdorn Insurance, Xantis Robotics, Ysenburg Wines,
+              Zinnober Fashion, Ackerland AgriTech, Bergwind Outdoor, Cobalt Harbour Finance, Distelfink Marketing]
+  titles: [Monthly check-in, QBR, Renewal prep, Support follow-up, Feature walkthrough]
+  signal_lines:
+    champion_departure:
+      - "Before we start, I should tell you I'm leaving {co} at the end of next month. {nxt} will take over the account from our side."
+      - "Quick heads-up: my last day here is in three weeks, and honestly I don't know who will own this tool after me."
+    competitor_mention:
+      - "To be transparent, our new VP asked us to look at {comp} before we sign anything again."
+      - "We have a trial of {comp} running with two of our team leads right now."
+    pricing_complaint:
+      - "Honestly, the renewal quote feels steep for what we're actually using. We'd need a real discount to justify it."
+      - "Finance flagged that we're paying for {capacity} seats and the price went up again. That's going to be a hard conversation."
+    budget_cut:
+      - "We're under a spending freeze until Q2, and every subscription over a few thousand euros is going through procurement review."
+      - "We had layoffs last month, so the budget for tools has been cut by about a third."
+    low_adoption:
+      - "To be honest, most of the team stopped logging in after the onboarding. They went back to their spreadsheets."
+      - "We rolled it out to the support team, but nobody really uses the reporting part."
+    exec_disengagement:
+      - "Our COO used to join these calls, but she has stopped responding to my updates about the tool."
+      - "Leadership told me this isn't a priority anymore, so I can't get anyone senior to the QBR."
+  decoys:
+    competitor_mention: "We looked at {comp} last year and picked you, and I'm still glad we did."
+    champion_departure: "Our previous admin left last year, but I've owned this for twelve months now and it's going well."
+    pricing_complaint: "Price was a discussion two years ago, but at this point the value is clear to everyone here."
+    budget_cut: "Budgets are tight everywhere, but this tool is on the protected list for next year."
+  owner_open: ["Thanks for making time today. How have the last few weeks been?", "Hi! Good to see you again. How are things on your side?"]
+  owner_mid: ["Got it, thanks for telling me.", "Okay, that's helpful context.", "Understood. Anything else on your mind?", "Let me note that down.", "Makes sense. Let's also look at the new dashboard release."]
+  owner_close: ["Great, I'll send the recording and the notes afterwards.", "Thanks, I'll follow up by email with next steps."]
+  neutral: ["Pretty busy, we're onboarding two new hires this month.", "The weekly export has been really useful for our Monday meeting.",
+            "Can you remind me how the permissions work for the new workspace?", "Sounds good, send it over.",
+            "The integration with our helpdesk has been stable since the last update."]
