@@ -130,7 +130,7 @@ export function CustomerData({ s, vocab, account }: { s: any; vocab: any; accoun
         </Card>
       </div>
       <p className="mt-3 text-xs text-ink-3">
-        The usage trend and any cut in {vocab.capacity.toLowerCase()} count toward the score. Support tickets and invoices are shown as context and are not in the score yet.
+        All four sources count toward the score: the usage trend, any cut in {vocab.capacity.toLowerCase()}, unresolved support tickets and overdue invoices, together with what customers said on calls.
       </p>
     </Panel>
   );
