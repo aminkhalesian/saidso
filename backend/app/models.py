@@ -75,6 +75,19 @@ class Conversation(Base):
     transcript: Mapped[str] = mapped_column(Text)
 
 
+class Reassurance(Base):
+    """A verbatim customer statement of satisfaction or intent to stay. Good news is evidence too."""
+    __tablename__ = "reassurances"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    client_id: Mapped[str] = mapped_column(String, index=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), index=True)
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"))
+    speaker: Mapped[str] = mapped_column(String)
+    quote: Mapped[str] = mapped_column(Text)
+    confidence: Mapped[float] = mapped_column(Float, default=0.6)
+    source: Mapped[str] = mapped_column(String, default="rules")
+
+
 class PlantedLabel(Base):
     """Ground truth for the eval harness (synthetic data only). is_decoy = looks risky but isn't."""
     __tablename__ = "planted_labels"

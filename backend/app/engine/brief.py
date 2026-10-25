@@ -45,6 +45,10 @@ def build_evidence(ctx: dict, pack: dict) -> list[dict]:
         _add(ev, "signal", f'{label}: "{s["quote"]}" ({s["speaker"]}, {s["title"]}, {s["date"]})', "risk", label,
              signal_id=s["id"], signal_type=s["signal_type"], quote=s["quote"], speaker=s["speaker"], date=s["date"],
              title=s["title"], conversation_id=s["conversation_id"])
+    for r in ctx.get("positives", []):
+        _add(ev, "positive_quote", f'Reassuring: "{r["quote"]}" ({r["speaker"]}, {r["title"]}, {r["date"]})', "reassuring",
+             "Customer reassurance", quote=r["quote"], speaker=r["speaker"], date=r["date"], title=r["title"],
+             conversation_id=r["conversation_id"])
     sc, c = ctx["score"], ctx["contract"]
     if sc["activity_pct"] <= -0.08:
         _add(ev, "activity", f"{v['activity']} down {abs(sc['activity_pct']):.0%} over the last 14 days vs. the earlier baseline.",
@@ -189,7 +193,9 @@ def plan_template(ctx: dict, ev: list[dict], pack: dict) -> dict | None:
     play = load_plays(pack["id"]).get(top.get("signal_type"), {})
     f = lambda t: fill(t, ctx, pack)                                      # noqa: E731
     qs = [{"text": f(q), "evidence": [top["id"]]} for q in play.get("questions", [])[:3]]
-    extra = next((e for e in risks if e["kind"] in ("ticket", "invoice", "feature", "activity") and e["id"] != top["id"]), None)
+    already_asked_about_usage = top.get("signal_type") == "low_adoption"       # its own questions already cover falling usage
+    extra = next((e for e in risks if e["kind"] in ("ticket", "invoice", "feature", "activity") and e["id"] != top["id"]
+                  and not (already_asked_about_usage and e["kind"] in ("activity", "feature"))), None)
     if extra is not None:                                                  # the third question is about a second source
         ask = {"ticket": f'Your ticket "{extra.get("subject")}" is still open. What would it take to close it?',
                "invoice": "Is anything blocking payment of the open invoices on your side?",
@@ -214,9 +220,15 @@ def _evidence_prompt(ctx: dict, ev: list[dict]) -> str:
             + "\n".join(f"{e['id']} [{ {'risk': 'R', 'reassuring': 'G'}.get(e['polarity'], 'N') }]: {e['text']}" for e in ev))
 
 
+def wants_plan(ctx: dict) -> bool:
+    """Medium and high risk accounts, and any account where the customer raised a live risk on a call. A low score must not
+    hide a customer who says they are trialing a competitor: the CSM still gets a drafted conversation to approve."""
+    return ctx["score"]["band"] != "low" or any(s["feedback"] != "dismissed" for s in ctx["signals"])
+
+
 def make_plan(ctx: dict, ev: list[dict], pack: dict) -> tuple[dict | None, str]:
-    """Retention plan for medium and high risk accounts. Drafts for the CSM to approve, never sent automatically."""
-    if ctx["score"]["band"] == "low":
+    """Retention plan for accounts that need one (see wants_plan). Drafts for the CSM to approve, never sent automatically."""
+    if not wants_plan(ctx):
         return None, "none"
     if llm.enabled():
         try:

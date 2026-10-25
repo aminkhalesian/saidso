@@ -1,8 +1,6 @@
 """Core guarantees: no ungrounded flags, citations validated, packs load, clients isolated, API works."""
 import os
 
-os.environ["MOCK_LLM"] = "1"
-os.environ["DATABASE_URL"] = "sqlite:///./test_engine.db"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -28,8 +26,6 @@ TRANSCRIPT = (f"Lena Vogt ({STAFF}): Thanks for joining. How are things?\n"
 def api():
     pipeline.seed()
     yield TestClient(app)
-    if os.path.exists("test_engine.db"):
-        os.remove("test_engine.db")
 
 
 def test_all_packs_load_and_have_playbooks():

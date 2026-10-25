@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from sqlalchemy import delete, select
 
-from ..models import Conversation, Signal
+from ..models import Conversation, Reassurance, Signal
 from . import llm
 
 LINE_RE = re.compile(r"^(?P<name>[^()\n]+?) \((?P<label>[^)\n]+)\):\s*(?P<text>.+)$")
@@ -14,8 +14,11 @@ LINE_RE = re.compile(r"^(?P<name>[^()\n]+?) \((?P<label>[^)\n]+)\):\s*(?P<text>.
 
 def schema(pack: dict) -> dict:
     return {
-        "type": "object", "additionalProperties": False, "required": ["signals"],
-        "properties": {"signals": {"type": "array", "items": {
+        "type": "object", "additionalProperties": False, "required": ["signals", "reassurances"],
+        "properties": {"reassurances": {"type": "array", "items": {
+            "type": "object", "additionalProperties": False, "required": ["speaker", "confidence", "quote"],
+            "properties": {"speaker": {"type": "string"}, "confidence": {"type": "number"}, "quote": {"type": "string"}}}},
+            "signals": {"type": "array", "items": {
             "type": "object", "additionalProperties": False,
             "required": ["signal_type", "speaker", "confidence", "quote"],
             "properties": {
@@ -38,7 +41,10 @@ def system_prompt(pack: dict, vendor: str) -> str:
         f"- Only statements by the {v['account'].lower()} count, never by {vendor}'s own staff.\n"
         "- Copy the quote verbatim from a single turn: the shortest full sentence(s) that prove the signal.\n"
         "- Only current risks. Past issues that were resolved, or decisions already made in the vendor's favour, are NOT signals.\n"
-        "- confidence is 0-1. Return an empty list if there are no signals. At most one entry per signal type."
+        "- confidence is 0-1. Return an empty list if there are no signals. At most one entry per signal type.\n"
+        f"- Separately, list up to two reassurances: verbatim statements by the {v['account'].lower()} that show real satisfaction "
+        "or an intention to stay or renew. A customer can raise a risk and be reassuring in the same call; report both. "
+        "Never count politeness, or statements by the vendor's own staff."
     )
 
 
@@ -75,6 +81,17 @@ def ground(raw: list[dict], turns: list[dict], valid_types) -> list[dict]:
     return out
 
 
+def ground_reassurances(raw: list[dict], turns: list[dict]) -> list[dict]:
+    """Same proof rule as risks: the quote must be verbatim in a customer turn. At most two per call."""
+    out = []
+    for r in raw:
+        g = ground([{"signal_type": "reassurance", "confidence": r.get("confidence", 0.6), "quote": r.get("quote", "")}],
+                   turns, {"reassurance"})
+        if g and all(norm(g[0]["quote"]) != norm(o["quote"]) for o in out):
+            out.append({"speaker": g[0]["speaker"], "confidence": g[0]["confidence"], "quote": g[0]["quote"]})
+    return out[:2]
+
+
 def extract_rules(transcript: str, pack: dict, staff_marker: str) -> list[dict]:
     turns = parse_turns(transcript, staff_marker)
     raw = [{"signal_type": k, "confidence": 0.6, "quote": t["text"]}
@@ -83,20 +100,40 @@ def extract_rules(transcript: str, pack: dict, staff_marker: str) -> list[dict]:
     return ground(raw, turns, pack["signals"].keys())
 
 
-def extract_llm(transcript: str, pack: dict, vendor: str, staff_marker: str) -> list[dict]:
+def reassure_rules(transcript: str, pack: dict, staff_marker: str) -> list[dict]:
+    pat = pack.get("reassurance_keywords")
+    turns = parse_turns(transcript, staff_marker)
+    raw = [{"confidence": 0.6, "quote": t["text"]} for t in turns if pat and not t["is_staff"] and re.search(pat, t["text"], re.I)]
+    return ground_reassurances(raw, turns)
+
+
+def extract_llm_full(transcript: str, pack: dict, vendor: str, staff_marker: str) -> tuple[list[dict], list[dict]]:
     data = llm.chat_json(system_prompt(pack, vendor), transcript, schema(pack), "risk_signals")
-    return ground(data.get("signals", []), parse_turns(transcript, staff_marker), pack["signals"].keys())
+    turns = parse_turns(transcript, staff_marker)
+    return (ground(data.get("signals", []), turns, pack["signals"].keys()),
+            ground_reassurances(data.get("reassurances", []), turns))
 
 
-def analyze(transcript: str, pack: dict, vendor: str, staff_marker: str, use_llm: Optional[bool] = None):
+def extract_llm(transcript: str, pack: dict, vendor: str, staff_marker: str) -> list[dict]:
+    return extract_llm_full(transcript, pack, vendor, staff_marker)[0]
+
+
+def analyze_full(transcript: str, pack: dict, vendor: str, staff_marker: str, use_llm: Optional[bool] = None):
+    """Risks and reassurances from one call. Returns (signals, reassurances, source)."""
     use_llm = llm.enabled() if use_llm is None else use_llm
     if use_llm:
         try:
-            return extract_llm(transcript, pack, vendor, staff_marker), "llm"
+            sigs, good = extract_llm_full(transcript, pack, vendor, staff_marker)
+            return sigs, good, "llm"
         except Exception as e:  # noqa: BLE001
             llm.record_failure()
             print("  AI extraction failed, using rules for this call:", str(e)[:160])
-    return extract_rules(transcript, pack, staff_marker), "rules"
+    return extract_rules(transcript, pack, staff_marker), reassure_rules(transcript, pack, staff_marker), "rules"
+
+
+def analyze(transcript: str, pack: dict, vendor: str, staff_marker: str, use_llm: Optional[bool] = None):
+    sigs, _, src = analyze_full(transcript, pack, vendor, staff_marker, use_llm)
+    return sigs, src
 
 
 def run(session, client, pack: dict, use_llm: Optional[bool] = None, workers: int = 6) -> int:
@@ -104,6 +141,7 @@ def run(session, client, pack: dict, use_llm: Optional[bool] = None, workers: in
     marker = staff_label(pack)
     convs = session.scalars(select(Conversation).where(Conversation.client_id == client.id)).all()
     session.execute(delete(Signal).where(Signal.client_id == client.id))
+    session.execute(delete(Reassurance).where(Reassurance.client_id == client.id))
     use = llm.enabled() if use_llm is None else use_llm
     if use:
         print(f"  {client.name}: reading {len(convs)} conversations with the AI "
@@ -111,7 +149,7 @@ def run(session, client, pack: dict, use_llm: Optional[bool] = None, workers: in
     done = [0]
 
     def work(c):
-        out = (c, analyze(c.transcript, pack, vendor, marker, use))
+        out = (c, analyze_full(c.transcript, pack, vendor, marker, use))
         done[0] += 1
         if use and (done[0] % 10 == 0 or done[0] == len(convs)):
             print(f"    {done[0]}/{len(convs)} conversations done")
@@ -120,10 +158,12 @@ def run(session, client, pack: dict, use_llm: Optional[bool] = None, workers: in
     with ThreadPoolExecutor(max_workers=min(workers, 3) if use else 1) as pool:
         results = list(pool.map(work, convs))
     n = 0
-    for conv, (sigs, src) in results:
+    for conv, (sigs, good, src) in results:
         for s in sigs:
             session.add(Signal(client_id=client.id, account_id=conv.account_id, conversation_id=conv.id, source=src, **s))
             n += 1
+        for g in good:
+            session.add(Reassurance(client_id=client.id, account_id=conv.account_id, conversation_id=conv.id, source=src, **g))
     session.commit()
     return n
 

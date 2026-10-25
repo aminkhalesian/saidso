@@ -112,3 +112,11 @@ probability is rejected and the account falls back to a template built from the 
 Medium and high risk accounts also get a conversation plan (main problem, objective, three questions, two retention options, follow-up),
 shown on the top drafted action. Nothing is sent: a CSM approves every customer-facing action.
 The score counts good news too (growing usage, invoices paid on time, no open complaints lower it). Weights live in `packs/*.yaml`.
+
+## Tests
+
+`cd backend && python -m pytest -q` runs everything on a temporary database (`tests/conftest.py`); the demo database is never opened.
+`tests/test_scenarios.py` builds three customers from raw usage data and a call (budget cuts with usage -60%, low adoption with usage -80%,
+a competitor trial with usage +7% and a happy customer) and checks detection, score against the pack configuration, evidence-cited briefs,
+the retention plan, and that changing the data changes the result. Normal runs mock the AI (no network).
+`MOCK_LLM=0 LIVE_LLM=1 python -m pytest tests/test_live_llm.py -s` runs the same three scenarios against the real model (needs a key; a few cents).

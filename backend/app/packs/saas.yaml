@@ -18,7 +18,7 @@ score:
   signals_max: 35
   support_max: 10           # unresolved complaints, high-priority and open tickets
   payment_max: 10           # overdue and late invoices
-  reassure_max: 10          # good news lowers the score: growing usage, invoices paid on time, no open complaints
+  reassure_max: 12          # good news lowers the score: growing usage, invoices paid on time, no open complaints
   urgency_max: 10
   bands: {high: 50, medium: 25}
 
@@ -69,7 +69,7 @@ signals:
     label: Low adoption
     weight: 10
     definition: The customer says the team isn't using the product, stopped using it, rolled it back, or can't get value from it.
-    keywords: '(stopped logging in|nobody (really )?uses|not using|went back to)'
+    keywords: '(stopped logging in|nobody (really )?uses|not using|went back to|(don''t|do not|doesn''t|does not|never) (really )?(understand|know how)|(confus|struggl)\w*|no one knows how)'
     playbook:
       kind: email
       title: Offer {account} a short re-onboarding
@@ -89,6 +89,9 @@ signals:
       kind: task
       title: Ask your leadership to reach out exec-to-exec at {account}
       body: Brief your VP on the account and ask them to send a short note to {account}'s leadership before the renewal.
+
+# Customer statements that count as good news (verbatim, customer turns only)
+reassurance_keywords: '(?<!not )(?<!n.t )(?<!never )\b(happy with|glad we|pleased with|satisfied|works (really )?well|plan to renew|will renew|intend to renew|love (it|the|using)|great (product|tool|partner))\b'
 
 synthetic:
   product: Brightdesk
