@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./index.css";
 import { AppProvider, useApp } from "./context";
 import { Shell } from "./components/Shell";
@@ -12,7 +12,10 @@ import { Portfolio } from "./pages/Portfolio";
 import { Trust } from "./pages/Trust";
 import { Sources } from "./pages/Sources";
 import { Analyze } from "./pages/Analyze";
+import { STATIC } from "./api";
 import { Loading } from "./components/ui";
+
+const Router = STATIC ? HashRouter : BrowserRouter;
 
 function Home() {
   const { clients } = useApp();
@@ -23,7 +26,7 @@ function Home() {
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AppProvider>
-      <BrowserRouter>
+      <Router>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/:clientId" element={<Shell />}>
@@ -38,7 +41,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route path="analyze" element={<Analyze />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </Router>
     </AppProvider>
   </React.StrictMode>,
 );
