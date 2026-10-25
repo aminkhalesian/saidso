@@ -7,6 +7,7 @@ import { Shell } from "./components/Shell";
 import { MyWeek } from "./pages/MyWeek";
 import { Renewals } from "./pages/Renewals";
 import { Account } from "./pages/Account";
+import { Retention } from "./pages/Retention";
 import { Portfolio } from "./pages/Portfolio";
 import { Trust } from "./pages/Trust";
 import { Sources } from "./pages/Sources";
@@ -30,6 +31,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route path="week" element={<MyWeek />} />
             <Route path="renewals" element={<Renewals />} />
             <Route path="accounts/:accountId" element={<Account />} />
+            <Route path="retention" element={<Retention />} />
             <Route path="portfolio" element={<Portfolio />} />
             <Route path="sources" element={<Sources />} />
             <Route path="trust" element={<Trust />} />
