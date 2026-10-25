@@ -99,3 +99,48 @@ def test_api_account_actions_feedback_trust_analyze(api):
     sample = api.get("/api/clients/kranich/sample-transcript").json()["transcript"]
     res = api.post("/api/clients/kranich/analyze", json={"transcript": sample}).json()
     assert res["signals"] and all(s["quote"] in sample for s in res["signals"])
+
+
+def test_every_signal_has_a_full_play():
+    from app.engine.actions import load_plays
+    for p in list_packs():
+        plays = load_plays(p["id"])
+        assert set(plays) == set(p["signals"]), f"{p['id']}: plays must cover every signal"
+        for key, play in plays.items():
+            for field in ("goal", "steps", "say", "pushback", "bring", "done_when"):
+                assert play[field], f"{p['id']}.{key} is missing {field}"
+
+
+def test_drafted_actions_are_plays_with_the_real_quote(api):
+    ov = api.get("/api/clients/brightdesk/overview").json()
+    assert ov["this_week"], "expected at least one account needing attention"
+    for row in ov["this_week"]:
+        body = row["action"]["body"]
+        assert body.startswith("WHY NOW\n") and "STEPS" in body and "IF THEY PUSH BACK" in body
+        detail = api.get(f"/api/clients/brightdesk/accounts/{row['action']['account_id']}").json()
+        quotes = [s["quote"] for s in detail["signals"]]
+        assert any(q in body for q in quotes)                    # the play cites a quote the customer really said
+        assert "{" not in body and "}" not in body               # no unfilled placeholders
+
+
+def test_every_account_shows_four_sources_that_agree_with_the_score(api):
+    ov = api.get("/api/clients/brightdesk/overview").json()
+    for row in ov["renewals"][:10]:
+        d = api.get(f"/api/clients/brightdesk/accounts/{row['account_id']}").json()
+        s = d["sources"]
+        assert s["usage"] and s["commercial"] and s["conversations"]["count"] >= 1
+        assert abs(s["usage"]["metric_pct"] - d["score"]["activity_pct"]) <= 0.02       # same windows as the score
+        assert s["commercial"]["annual_value"] == d["contract"]["annual_value"]
+        if s["support"]:
+            assert s["support"]["unresolved"] <= s["support"]["total"]
+
+
+def test_sources_overview_and_csv_export(api, tmp_path):
+    ov = api.get("/api/clients/kranich/sources").json()
+    assert [s["key"] for s in ov["sources"]] == ["usage", "conversations", "support", "commercial"]
+    assert len(ov["files"]) == 8
+    from app.connectors.csv_export import export_csv
+    from app.models import SessionLocal
+    with SessionLocal() as session:
+        written = export_csv(session, "kranich", str(tmp_path))
+    assert set(written) == {f["file"] for f in ov["files"]} and written["tickets.csv"] > 0 and written["invoices.csv"] > 0

@@ -1,0 +1,116 @@
+# Plays: what the CSM actually does for each signal. Placeholders: {account} {contact_first} {owner} {product} {days}
+# Every play is a draft for a person to approve or edit. Check what you may offer (discounts, terms) before the call.
+champion_departure:
+  goal: "Keep the account alive through the handover: meet the successor and one more sponsor before {contact_first} leaves."
+  steps:
+    - "Today: ask {contact_first} who takes over and book a three-way handover call before their last day."
+    - "This week: find a second sponsor (their manager or the heaviest user) and get 20 minutes with them."
+    - "Prepare a one-page summary of what {account} has built in {product}: top three workflows, usage trend, results they have mentioned."
+    - "On the handover call, ask about the successor's priorities first and present history second. Agree one quick win for the first 30 days."
+    - "Book the renewal conversation with the successor. Timing: {early}."
+  say:
+    - "Before you go, I want to make sure nothing your team built gets lost. Who should I meet?"
+    - "What would you want your successor to know about how you use {product}?"
+  pushback:
+    - "'I don't know who is taking over yet.' Ask who their manager is and offer a 20-minute call with the manager to cover the transition."
+    - "'My successor will re-evaluate everything.' Agree, and offer a results summary they can use for that review."
+  bring:
+    - "Usage trend for the last 90 days"
+    - "Top three workflows and who uses them"
+    - "Renewal date and current terms"
+  done_when: "A named successor and a second contact are on the account, and a call with the successor is booked before {contact_first}'s last day."
+
+competitor_mention:
+  goal: "Learn what triggered the evaluation and win on the two or three things this team really relies on."
+  steps:
+    - "Within 48 hours, ask {contact_first} directly and without defensiveness what made them look at alternatives."
+    - "Find out who runs the evaluation, what the criteria are and when the decision is due."
+    - "Map their must-have workflows against {product}. Be honest about gaps and pass real product gaps to your product team."
+    - "Offer a side-by-side session on their own data, not a generic demo."
+    - "Agree a decision date with them and book a check-in right after their trial ends."
+  say:
+    - "Totally fair to look around. What made you start? I would rather fix the real issue than guess."
+    - "Which two or three things matter most? Let's compare exactly those on your own workflows."
+  pushback:
+    - "'It's only a trial for one team.' Ask which team and what for, then offer the same side-by-side for them."
+    - "'They are cheaper.' Do not discount first. Ask what they would give up and compare total cost including migration time. Check your discount authority before offering anything."
+  bring:
+    - "Comparison of their key workflows"
+    - "Usage by team"
+    - "A reference customer in the same segment, if you have one"
+  done_when: "You know the trigger, the decision-maker and the deadline, and a comparison session is booked."
+
+pricing_complaint:
+  goal: "Show the value in numbers and bring a right-sized option to the renewal call, instead of starting with a discount."
+  steps:
+    - "Pull usage per team: who uses {product} daily and who barely touches it."
+    - "Pick the three workflows {account} depends on most, with a result you can evidence (time saved, volume handled)."
+    - "Prepare two options: the same scope, and a smaller one with fewer seats or a lower tier."
+    - "Check internally what you may offer (discount, term length, tier) before the call."
+    - "Raise the price topic yourself at the next call, so there is no surprise ask at renewal. Timing: {early}."
+  say:
+    - "You mentioned the price. Let me show where the value is and where you may be paying for seats nobody uses. I would rather right-size than have you overpay."
+  pushback:
+    - "'We need 20% off.' Ask which budget number they must hit and what they could trade (longer term, annual prepay)."
+    - "'Finance only sees the cost.' Give them a one-page summary finance can read without a demo."
+  bring:
+    - "Usage per team"
+    - "One-page value summary"
+    - "Two options with prices"
+  done_when: "They have seen two options and know the next date. No new price ask appears at renewal."
+
+budget_cut:
+  goal: "Get ahead of procurement: make the renewal easy to justify, and have a smaller option ready so a cut does not become a churn."
+  steps:
+    - "Ask {contact_first} who approves spend and what procurement needs (forms, security review, deadlines)."
+    - "Send the renewal paperwork early. Timing: {paperwork}."
+    - "Write a justification {contact_first} can forward: usage, results, cost per active user."
+    - "Prepare a fallback: fewer seats or a lower tier, with a clause to grow back."
+    - "If {contact_first} agrees, ask for 20 minutes with the budget owner in finance."
+  say:
+    - "Understood, everyone is under pressure. What does procurement need from us to keep this on the approved list?"
+    - "If you had to cut, what would hurt least? I would rather shrink with you than lose you."
+  pushback:
+    - "'Everything is frozen.' Ask when the freeze ends and whether renewals under an existing contract are exempt."
+    - "'Layoffs mean fewer users.' Offer seats matched to headcount, with a right to add seats back."
+  bring:
+    - "Procurement forms and security documents"
+    - "Usage and cost per active user"
+    - "Fallback option"
+  done_when: "Procurement steps and dates are known, paperwork is sent and the fallback option is ready."
+
+low_adoption:
+  goal: "Get the team using two or three workflows that give real value, and show it in usage within 30 days."
+  steps:
+    - "Check who logged in during the last 30 days and which features they used."
+    - "Ask {contact_first} why: training, no time, wrong fit, or replaced by another tool?"
+    - "Run a 30-minute session with the real users on two or three workflows."
+    - "Agree a 30-day usage target with them and book a check-in at day 14."
+    - "If usage does not recover, discuss right-sizing before the renewal, not at it."
+  say:
+    - "Usage has dipped. Is that expected, or are people stuck on something?"
+    - "What would make it worth opening every day?"
+  pushback:
+    - "'People are too busy.' Offer 20 minutes inside a meeting they already have."
+    - "'We switched to another tool.' Treat it as a competitor signal and follow that play."
+  bring:
+    - "Usage by user"
+    - "A short how-to for the two or three workflows"
+  done_when: "The session has happened, a usage target is agreed and the day-14 check-in is booked."
+
+exec_disengagement:
+  goal: "Re-engage a senior sponsor so the renewal is not decided by someone who has not seen the value."
+  steps:
+    - "Brief your own leader on {account}: history, value, risks, renewal date."
+    - "Ask your leader to send a short, personal note to their counterpart: what has been achieved and one thing you would like their view on. No sales pitch."
+    - "Offer a 20-minute executive briefing about results in their language: cost, risk, speed."
+    - "Ask {contact_first} who else in leadership cares about the outcome."
+    - "Book the executive review. Timing: {early}."
+  say:
+    - "Our head of customer success would like to hear your priorities for next year. Would 20 minutes work?"
+  pushback:
+    - "'She is too busy.' Offer a one-page summary and a 10-minute slot."
+    - "'It isn't a priority anymore.' Ask what is a priority, and how {product} could connect to it."
+  bring:
+    - "Executive one-pager: results, cost, adoption, risks"
+  done_when: "The executive has replied or named a delegate, and a briefing is on the calendar."

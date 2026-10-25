@@ -1,0 +1,68 @@
+# Same for the agency retainers pack. "Usage" here is hours logged on the client's work and portal logins.
+mode: hours                 # usage is counted in hours (sum over 30 days)
+labels:
+  usage: Work and portal usage
+  metric: Hours logged per day
+  metric_note: last 14 days against the earlier baseline
+  logins: Portal logins
+  features: Hours by workstream
+  feature_unit: hours
+  support: Client requests
+  commercial: Commercial
+  purchased: Retainer hours / month
+  utilization: Retainer hours used
+invoice:
+  prefix: KS
+  net_days: 30
+features:
+  - {name: Paid media, share: 0.30}
+  - {name: Content, share: 0.25}
+  - {name: Social, share: 0.18}
+  - {name: SEO, share: 0.12}
+  - {name: Email, share: 0.08}
+  - {name: Brand and creative, share: 0.07}
+tickets:
+  how_to:
+    - "Where can I find the latest campaign report?"
+    - "How do I approve a draft in the portal?"
+    - "Can you add my new colleague to the weekly report?"
+  feature_request:
+    - "Could we add a weekly performance snapshot?"
+    - "Request: a shared calendar for upcoming campaigns"
+  bug:
+    - "The reporting dashboard shows last month's numbers"
+    - "The tracking link in the newsletter is broken"
+    - "Portal login fails for two of our colleagues"
+  billing:
+    - "Please resend the invoice with our PO number"
+    - "The invoice includes hours we did not approve"
+  complaint:
+    - "The last two deliverables missed our brief"
+    - "We still have not received the campaign report we asked for"
+    - "Response times have slipped. Can we have a call about it?"
+    - "Feedback rounds keep repeating and the deadline has moved twice"
+connections:
+  usage:
+    title: Work and portal usage
+    provides: [Hours logged, Hours by workstream, Portal logins]
+    systems: Harvest, Productive, Float, or your timesheet tool
+    today: "CSV export: activity.csv, usage.csv, features.csv"
+    next: Timesheet API
+  conversations:
+    title: Client conversations
+    provides: [Call transcripts, The exact quotes]
+    systems: Zoom, Microsoft Teams, Google Meet, Fireflies
+    today: "CSV or text export: conversations.csv"
+    next: Zoom and Teams connectors
+  support:
+    title: Client requests
+    provides: [Open requests, Complaints, Unresolved issues]
+    systems: Asana, Jira, Trello, the shared client inbox
+    today: "CSV export: tickets.csv"
+    next: Project tool API
+  commercial:
+    title: Commercial
+    provides: [Retainer renewals, Monthly value, Retainer hours, Payment issues]
+    systems: HubSpot, Xero, DATEV, lexoffice
+    today: "CSV export: contracts.csv, invoices.csv"
+    next: CRM and accounting API

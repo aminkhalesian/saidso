@@ -5,6 +5,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 import { api, euro, pct, shortDate } from "../api";
 import { useAsync, useClient } from "../context";
 import { ActionCard } from "../components/ActionCard";
+import { CustomerData } from "../components/CustomerData";
 import { Cite, ErrorNote, Loading, Panel, Quote, RiskPill } from "../components/ui";
 
 export function Account() {
@@ -75,6 +76,8 @@ export function Account() {
               {brief.next_step.evidence.map((id: string) => <Cite key={id} id={id} onClick={() => jump(id)} />)}
             </div>
           </Panel>
+
+          <CustomerData s={data.sources} vocab={v} account={a.name} />
 
           <Panel title="Evidence" aside={<span className="text-xs text-ink-3">Confirm or dismiss each flag; dismissed flags stop counting toward the score</span>}>
             <ol className="space-y-3">

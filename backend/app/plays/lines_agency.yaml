@@ -1,0 +1,38 @@
+# Extra customer lines for the synthetic demo data (agency pack). Added AFTER the two lines in packs/agency.yaml.
+# Placeholders: {co} {nxt} {capacity} {comp}
+new_decision_maker:
+  - "We've hired a new Head of Marketing who starts next week, and she'll be taking over this relationship."
+  - "Our marketing director left last month, and the interim lead hasn't decided how she wants to work with agencies yet."
+  - "We were acquired recently, and a new brand lead from the parent company will decide on all agency work from now on."
+  - "I'm moving to a different team in April, and {nxt} will be your contact. They haven't worked with agencies before."
+  - "There's a new VP of Brand who joined this month, and she's asked to meet every agency we work with."
+agency_review:
+  - "Our procurement team is reviewing all marketing suppliers this quarter, and you'll be asked to re-pitch."
+  - "The board wants to see what else is out there, so we've been invited to look at a few other agencies."
+  - "We've also had a pitch from {comp} for the paid media work, and we're taking it seriously."
+  - "Our new policy says any retainer above a certain value has to go out to tender every three years, and yours is up."
+  - "I wanted to give you a heads-up that we're going to run a competitive pitch for the whole account in the autumn."
+scope_pressure:
+  - "Next year's marketing budget is being cut by about 25%, so we'll have to take something off the retainer."
+  - "We'd like to move the social channel work in-house, so I expect the scope to shrink after the summer."
+  - "Finance has asked us to pause all non-essential spend, and I'm worried the retainer will count as that."
+  - "Our CEO wants fewer hours from agencies and more from the internal team, so we'll be asking to reduce the retainer."
+  - "We're restructuring the marketing team and plan to bring the content production back in-house next quarter."
+value_doubt:
+  - "To be honest, the last two quarterly reports haven't shown me anything that justifies the retainer."
+  - "Leadership keeps asking what we get for the money, and I haven't had a convincing answer for them."
+  - "The campaign numbers have been flat for months, and I'm starting to wonder whether this is working."
+  - "I don't feel we're getting enough value for the hours we pay for, and I'd like to talk about that."
+  - "Our CMO said the creative has been underwhelming lately and wants to see a stronger plan."
+approval_delays:
+  - "Apologies for the silence. Our approvals are stuck with the brand committee, and they only meet once a month."
+  - "I haven't had time to look at your drafts for two weeks, and I don't see that changing soon."
+  - "Everything needs sign-off from legal now, and they're swamped, so the campaign will keep slipping."
+  - "Our approver is on extended leave, and nobody else wants to sign off on the creative."
+  - "We've paused all new briefs until the reorganisation is finished, so I can't give you feedback yet."
+payment_delays:
+  - "Our new finance system is causing trouble, so your last invoice hasn't been processed yet."
+  - "Your invoices are held up in accounts payable because the purchase order expired."
+  - "Finance put a hold on all supplier payments until the end of the quarter, so please expect delays."
+  - "I know September's invoice is overdue. It's stuck in approval and I can't tell you when it will be paid."
+  - "Accounts payable asked us to reissue the last two invoices with a new reference, so payment will be late."

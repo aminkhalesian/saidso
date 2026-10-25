@@ -18,6 +18,7 @@ export const api = {
   overview: (c: string, window = 90) => req<any>(`/clients/${c}/overview?window=${window}`),
   account: (c: string, id: number | string) => req<any>(`/clients/${c}/accounts/${id}`),
   portfolio: (c: string) => req<any>(`/clients/${c}/portfolio`),
+  sources: (c: string) => req<any>(`/clients/${c}/sources`),
   trust: (c: string) => req<any>(`/clients/${c}/trust`),
   sample: (c: string) => req<{ transcript: string }>(`/clients/${c}/sample-transcript`),
   analyze: (c: string, transcript: string) =>

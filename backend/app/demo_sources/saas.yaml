@@ -1,0 +1,71 @@
+# What the demo generator and the "Data sources" screen say for the B2B SaaS pack.
+mode: users                 # usage is counted in users (daily average)
+labels:
+  usage: Product usage
+  metric: Active users
+  metric_note: daily average, last 14 days against the earlier baseline
+  logins: Logins
+  features: Features used
+  feature_unit: users
+  support: Support
+  commercial: Commercial
+  purchased: Seats purchased
+  utilization: Seats in use
+invoice:
+  prefix: BD
+  net_days: 14
+features:
+  - {name: Dashboards, share: 0.88}
+  - {name: Reports, share: 0.72}
+  - {name: Automations, share: 0.48}
+  - {name: Integrations, share: 0.40}
+  - {name: Mobile app, share: 0.28}
+  - {name: API access, share: 0.14}
+tickets:
+  how_to:
+    - "How do I add a new teammate to our workspace?"
+    - "Can you show me how to set up a scheduled report?"
+    - "Where do I find last month's export?"
+    - "How do we change the owner of a dashboard?"
+  feature_request:
+    - "Could we get a weekly summary email for managers?"
+    - "Request: filter dashboards by region"
+    - "Can reports be shared with people outside our company?"
+  bug:
+    - "Scheduled report did not arrive on Monday"
+    - "Dashboard widgets load very slowly since the last update"
+    - "Export to CSV cuts off after 1,000 rows"
+    - "SSO login fails for some users"
+  billing:
+    - "Invoice shows the wrong number of seats"
+    - "Please resend last month's invoice with our PO number"
+  complaint:
+    - "This is the third time the export fails. We need a fix this week."
+    - "No reply to our escalation for nine days"
+    - "The integration still does not sync and the team has stopped trusting the data"
+    - "We were promised a fix in the last release and it is still broken"
+connections:
+  usage:
+    title: Product usage
+    provides: [Logins, Active users, Usage trends, Features used]
+    systems: Mixpanel, Amplitude, Pendo, or your own database
+    today: "CSV export: activity.csv, usage.csv, features.csv"
+    next: Read-only API or a warehouse view (Snowflake, BigQuery)
+  conversations:
+    title: Customer conversations
+    provides: [Call transcripts, The exact quotes]
+    systems: Gong, Zoom, Microsoft Teams, Fireflies, Fathom
+    today: "CSV or text export: conversations.csv"
+    next: Gong and Zoom connectors
+  support:
+    title: Support
+    provides: [Open tickets, Complaints, Unresolved issues]
+    systems: Zendesk, Intercom, Freshdesk, Jira Service Management
+    today: "CSV export: tickets.csv"
+    next: Helpdesk API
+  commercial:
+    title: Commercial
+    provides: [Contract renewals, ARR, Seats purchased, Payment issues]
+    systems: HubSpot, Salesforce, Stripe, Chargebee
+    today: "CSV export: contracts.csv, invoices.csv"
+    next: CRM and billing API

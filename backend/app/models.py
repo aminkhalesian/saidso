@@ -125,6 +125,57 @@ class Action(Base):
     decided_at: Mapped[Optional[dt.datetime]] = mapped_column(DateTime, nullable=True)
 
 
+class Ticket(Base):
+    """A support ticket (or client request) from the client's helpdesk."""
+    __tablename__ = "tickets"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    client_id: Mapped[str] = mapped_column(String, index=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), index=True)
+    opened: Mapped[dt.date] = mapped_column(Date)
+    last_update: Mapped[dt.date] = mapped_column(Date)
+    status: Mapped[str] = mapped_column(String)                 # open | pending | solved
+    priority: Mapped[str] = mapped_column(String, default="normal")   # low | normal | high
+    category: Mapped[str] = mapped_column(String, default="other")    # how_to | feature_request | bug | billing | complaint
+    subject: Mapped[str] = mapped_column(String)
+
+
+class Invoice(Base):
+    """One invoice from the client's billing system. Unpaid and past due means a payment issue."""
+    __tablename__ = "invoices"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    client_id: Mapped[str] = mapped_column(String, index=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), index=True)
+    number: Mapped[str] = mapped_column(String)
+    issued: Mapped[dt.date] = mapped_column(Date)
+    due: Mapped[dt.date] = mapped_column(Date)
+    amount: Mapped[float] = mapped_column(Float)
+    paid_on: Mapped[Optional[dt.date]] = mapped_column(Date, nullable=True)
+
+
+class UsageStat(Base):
+    """Last 30 days against the 30 days before: usage, logins and last login for one account."""
+    __tablename__ = "usage_stats"
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), primary_key=True)
+    client_id: Mapped[str] = mapped_column(String, index=True)
+    metric: Mapped[float] = mapped_column(Float)                # active users (daily average) or hours logged
+    metric_prev: Mapped[float] = mapped_column(Float)
+    utilization: Mapped[float] = mapped_column(Float)           # metric against what was purchased (seats or hours)
+    logins: Mapped[int] = mapped_column(Integer)
+    logins_prev: Mapped[int] = mapped_column(Integer)
+    last_login: Mapped[Optional[dt.date]] = mapped_column(Date, nullable=True)
+
+
+class FeatureUsage(Base):
+    """How much of each feature (or workstream) the account used in the last 30 days, and in the 30 before."""
+    __tablename__ = "feature_usage"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    client_id: Mapped[str] = mapped_column(String, index=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"), index=True)
+    feature: Mapped[str] = mapped_column(String)
+    value: Mapped[float] = mapped_column(Float)
+    value_prev: Mapped[float] = mapped_column(Float)
+
+
 def init_db(drop: bool = False):
     if drop:
         Base.metadata.drop_all(engine)
