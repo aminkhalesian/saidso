@@ -3,7 +3,7 @@ import { CalendarCheck, Rows3, PieChart, ShieldCheck, AudioLines, Database } fro
 import { useApp, useClient } from "../context";
 
 const NAV = [
-  { to: "week", label: "My week", icon: CalendarCheck },
+  { to: "week", label: "Dashboard", icon: CalendarCheck },
   { to: "renewals", label: "All renewals", icon: Rows3 },
   { to: "portfolio", label: "Portfolio", icon: PieChart },
   { to: "sources", label: "Data sources", icon: Database },

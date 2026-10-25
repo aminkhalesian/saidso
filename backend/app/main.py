@@ -79,16 +79,13 @@ def overview(client_id: str, window: int = 90, session=Depends(db)):
         drafts[a.account_id].append(action_dict(a))
     high = [c for c in ctxs if c["score"]["band"] == "high"]
     week = []
-    for c in ctxs:
+    for c in high:                                   # every high-risk customer, not just the first few
         aid = c["account"]["id"]
-        if c["score"]["band"] == "low" or not drafts[aid]:
-            continue
         payload, _ = brief_for(session, client_id, c, pack)
         top = next((e for e in payload["evidence"] if e["kind"] == "signal"),
                    next((e for e in payload["evidence"] if e["kind"] in ("activity", "capacity")), None))
-        week.append({**summary_row(c, pack), "reason": top, "action": drafts[aid][0], "more_actions": len(drafts[aid]) - 1})
-        if len(week) == 4:
-            break
+        week.append({**summary_row(c, pack), "reason": top, "action": drafts[aid][0] if drafts[aid] else None,
+                     "more_actions": max(0, len(drafts[aid]) - 1)})
     done = session.scalars(select(Action).where(Action.client_id == client_id, Action.status != "draft")).all()
     return {
         "client": {"id": client.id, "name": client.name, "user_name": client.user_name},

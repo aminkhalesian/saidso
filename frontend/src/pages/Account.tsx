@@ -44,7 +44,7 @@ export function Account() {
   return (
     <div className="reveal">
       <Link to={`/${clientId}/week`} className="mb-4 inline-flex items-center gap-1 text-sm text-ink-3 hover:text-ink">
-        <ArrowLeft size={15} /> My week
+        <ArrowLeft size={15} /> Dashboard
       </Link>
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-3">

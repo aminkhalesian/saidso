@@ -4,6 +4,7 @@ import { AlertTriangle, Bell, ChevronDown, Clock, ListChecks } from "lucide-reac
 import { api, euro, euroShort } from "../api";
 import { useAsync, useClient } from "../context";
 import { ActionCard } from "../components/ActionCard";
+import { SortHead, useSort } from "../components/sort";
 import { BAND_FILL, Chip, ErrorNote, Initials, Kpi, KpiStrip, Loading, Panel, Quote, RiskPill, ScoreRing } from "../components/ui";
 
 export function MyWeek() {
@@ -11,6 +12,7 @@ export function MyWeek() {
   const client = useClient(clientId);
   const { data, error } = useAsync(() => api.overview(clientId), [clientId]);
   const [open, setOpen] = useState<number | null>(null);
+  const { sort, toggle, apply } = useSort("score");
 
   const stats = useMemo(() => {
     const rows: any[] = data?.renewals ?? [];
@@ -29,20 +31,21 @@ export function MyWeek() {
   if (error) return <ErrorNote error={error} />;
   if (!data || !client) return <Loading />;
   const v = client.pack.vocabulary;
-  const n = data.this_week.length;
-  const first = (open === null && data.this_week[0]?.account_id) || open;
+  const rows = apply<any>(data.this_week);
+  const n = rows.length;
+  const first = (open === null && rows[0]?.account_id) || open;
   const total = stats.money.high + stats.money.medium + stats.money.low;
 
   return (
     <div className="reveal">
       <header className="mb-5">
-        <h1 className="text-[1.65rem] font-bold leading-tight tracking-tight">My week</h1>
+        <h1 className="text-[1.65rem] font-bold leading-tight tracking-tight">Dashboard</h1>
         <p className="text-[13px] text-ink-2">{data.client.user_name} · {v.renewal.toLowerCase()}s in the next 90 days</p>
       </header>
 
       <KpiStrip>
         <Kpi tone="high" icon={<AlertTriangle size={22} strokeWidth={1.8} />} label="High-risk value" value={euroShort(data.kpis.value_at_risk)} chip={<Chip tone="high">{data.kpis.high_risk} of {data.kpis.renewals} {v.accounts.toLowerCase()}</Chip>} />
-        <Kpi icon={<Bell size={22} strokeWidth={1.8} />} label="Need you this week" value={n} chip={<Chip tone="high">to approve</Chip>} />
+        <Kpi icon={<Bell size={22} strokeWidth={1.8} />} label="High-risk to review" value={n} chip={<Chip tone="high">{v.accounts.toLowerCase()}</Chip>} />
         <Kpi icon={<Clock size={22} strokeWidth={1.8} />} label={`Next ${v.renewal.toLowerCase()}`} value={stats.next ? `${stats.next.days_to_renewal} days` : "–"} chip={stats.next && <Chip>{stats.next.name}</Chip>} />
         <Kpi icon={<ListChecks size={22} strokeWidth={1.8} />} label="Drafted steps waiting" value={data.kpis.open_actions} chip={<Chip>{data.kpis.signals} signals</Chip>} />
       </KpiStrip>
@@ -50,14 +53,14 @@ export function MyWeek() {
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <Panel className="!p-0">
           <div className="flex items-center gap-3 px-6 pb-3.5 pt-5">
-            <h2 className="text-base font-bold tracking-tight">Needs you</h2>
+            <h2 className="text-base font-bold tracking-tight">High-risk {v.accounts.toLowerCase()}</h2>
             <Chip tone="high">{n}</Chip>
           </div>
           <div className="hidden grid-cols-[minmax(0,1.5fr)_56px_160px_110px_80px_24px] gap-3.5 border-y border-line bg-paper px-6 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3 lg:grid">
-            <span>{v.account}</span><span>Risk</span><span>Signal</span><span>Renews in</span><span className="text-right">{v.activity.split(" ").slice(-1)[0] === "users" ? "Usage" : "Activity"}</span><span />
+            <span>{v.account}</span><SortHead label="Risk" k="score" sort={sort} onToggle={toggle} /><span>Signal</span><SortHead label="Renews in" k="days" sort={sort} onToggle={toggle} /><span className="text-right">{v.activity.split(" ").slice(-1)[0] === "users" ? "Usage" : "Activity"}</span><span />
           </div>
-          {n === 0 && <p className="px-6 py-10 text-center text-ink-3">Nothing needs you this week.</p>}
-          {data.this_week.map((row: any) => {
+          {n === 0 && <p className="px-6 py-10 text-center text-ink-3">No high-risk customers right now.</p>}
+          {rows.map((row: any) => {
             const isOpen = first === row.account_id;
             const urgent = row.days_to_renewal <= 14;
             const others = row.signals.filter((l: string) => l !== row.reason?.label);
@@ -104,7 +107,7 @@ export function MyWeek() {
                     {others.length > 0 && <p className="mt-3 text-xs text-ink-2">Also flagged: {others.join(", ")}</p>}
                     <div className="mt-4 space-y-2 border-t border-line pt-4">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">Drafted next step</p>
-                      <ActionCard action={row.action} compact />
+                      {row.action ? <ActionCard action={row.action} compact /> : <p className="text-sm text-ink-3">No step drafted yet. Open the customer for the evidence.</p>}
                       <div className="flex justify-between pt-1 text-xs">
                         {row.more_actions > 0 ? <span className="text-ink-2">{row.more_actions} more drafted step{row.more_actions > 1 ? "s" : ""}</span> : <span />}
                         <Link to={`/${clientId}/accounts/${row.account_id}`} className="font-semibold text-act hover:underline">Open {v.account.toLowerCase()} →</Link>
