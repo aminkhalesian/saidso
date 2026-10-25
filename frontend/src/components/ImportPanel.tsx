@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Download, FileUp, Trash2, Upload } from "lucide-react";
+import { Check, Download, FileUp, Trash2, Upload, X } from "lucide-react";
 import { api } from "../api";
 import { Button, Chip, Panel, RiskPill } from "./ui";
 
@@ -56,7 +56,18 @@ export function ImportPanel({ clientId, customers }: { clientId: string; custome
   async function undo() {
     const r = await api.undoImport(clientId);
     setResult(null);
-    setRemoved(`Removed ${r.customers_removed} ${customers} and ${r.calls_removed} imported calls.`);
+    setRemoved(`Removed ${r.customers_removed} imported ${customers} and ${r.calls_removed} imported calls. Refresh the page to see the lists without them.`);
+  }
+
+  async function accept() {
+    const r = await api.acceptImport(clientId);
+    setResult({ ...result, pending: false, accepted: r });
+  }
+
+  async function decline() {
+    await api.declineImport(clientId);
+    setResult(null);
+    setRemoved("Declined. Nothing from this file was added to your lists.");
   }
 
   const s = result?.summary;
@@ -87,7 +98,7 @@ export function ImportPanel({ clientId, customers }: { clientId: string; custome
           {err && <p className="mt-2 text-sm text-high" role="alert">{err}</p>}
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <Button onClick={run} disabled={busy}><Upload size={15} /> {busy ? "Reading the file…" : "Import and score"}</Button>
-            <Button variant="ghost" onClick={undo}><Trash2 size={15} /> Remove imported</Button>
+            <Button variant="ghost" onClick={undo}><Trash2 size={15} /> Remove all imported {customers}</Button>
           </div>
           {busy && <p className="mt-2 text-sm text-ink-2" role="status">The AI is reading each customer's call notes and writing a brief. With a real AI key this can take one to two minutes for a dozen customers. Keep this page open.</p>}
           {removed && <p className="mt-2 text-sm text-low">{removed}</p>}
@@ -98,14 +109,25 @@ export function ImportPanel({ clientId, customers }: { clientId: string; custome
             <p className="text-sm text-ink-3">The result appears here: who was added, which flags were found, and where each {customers.replace(/s$/, "")} lands.</p>
           ) : (
             <>
+              {result.pending ? (
+                <div className="mb-3 flex flex-wrap items-center gap-3 rounded-[10px] border border-line-2 bg-paper px-3.5 py-3">
+                  <p className="min-w-0 flex-1 text-[13px] leading-snug text-ink-2"><b className="text-ink">Not in your lists yet.</b> Check the flags below, then decide. Nothing from this file appears on the Dashboard or in All renewals until you add it.</p>
+                  <Button onClick={accept}><Check size={15} /> Add to list</Button>
+                  <Button variant="outline" onClick={decline}><X size={15} /> Decline</Button>
+                </div>
+              ) : (
+                <p className="mb-3 rounded-[10px] bg-low-soft px-3.5 py-2.5 text-[13px] font-semibold text-low">Added to your lists. Open the Dashboard or All renewals to see them.</p>
+              )}
               <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
                 <Chip tone="low">{s.added} added</Chip>
                 {s.updated > 0 && <Chip>{s.updated} updated</Chip>}
                 {s.skipped > 0 && <Chip tone="high">{s.skipped} skipped</Chip>}
                 <Chip>{s.flags} flags</Chip>
-                <span className="mx-1 text-ink-3">See them in</span>
-                <Link className="font-semibold text-act hover:underline" to={`/${clientId}/week`}>Dashboard</Link>
-                <Link className="font-semibold text-act hover:underline" to={`/${clientId}/renewals`}>All renewals</Link>
+                {!result.pending && <>
+                  <span className="mx-1 text-ink-3">See them in</span>
+                  <Link className="font-semibold text-act hover:underline" to={`/${clientId}/week`}>Dashboard</Link>
+                  <Link className="font-semibold text-act hover:underline" to={`/${clientId}/renewals`}>All renewals</Link>
+                </>}
               </div>
               {result.notes.length > 0 && <p className="mb-2 text-xs text-ink-2">File: {result.notes.join("; ")}.</p>}
               <ul className="divide-y divide-line rounded-[10px] border border-line">
@@ -120,7 +142,7 @@ export function ImportPanel({ clientId, customers }: { clientId: string; custome
                     {r.status !== "skipped" && (
                       <p className="mt-1 text-[13px] text-ink-2">
                         {r.signals?.length ? <>Flags: {r.signals.join(", ")}{r.found_by ? ` (found by ${r.found_by})` : ""}.</> : "No flags found."}{" "}
-                        {r.in_renewals === false ? "Renews outside the 90-day view, so it is not listed. " : r.on_dashboard ? "On the Dashboard. " : r.in_renewals ? "In All renewals. " : ""}
+                        {r.in_renewals === false ? "Renews outside the 90-day view, so it would not be listed. " : r.on_dashboard ? (result.pending ? "Would be on the Dashboard. " : "On the Dashboard. ") : r.in_renewals ? (result.pending ? "Would be in All renewals. " : "In All renewals. ") : ""}
                       </p>
                     )}
                     {r.reason && <p className="mt-1 text-[13px] text-high">{r.reason}.</p>}

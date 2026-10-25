@@ -59,6 +59,8 @@ export const api = {
     req<any>(`/clients/${c}/analyze`, { method: "POST", body: JSON.stringify({ transcript }) }),
   importTemplate: (c: string) => req<{ csv: string }>(`/clients/${c}/import-template`),
   importCsv: (c: string, csv: string) => req<any>(`/clients/${c}/import`, { method: "POST", body: JSON.stringify({ csv }) }),
+  acceptImport: (c: string) => req<any>(`/clients/${c}/import/accept`, { method: "POST" }),
+  declineImport: (c: string) => req<any>(`/clients/${c}/import/pending`, { method: "DELETE" }),
   undoImport: (c: string) => req<any>(`/clients/${c}/import`, { method: "DELETE" }),
   decide: (client: string, id: number, status: "approved" | "dismissed" | "draft", body?: string) =>
     req<any>(`/clients/${client}/actions/${id}`, { method: "POST", body: JSON.stringify({ status, body }) }),

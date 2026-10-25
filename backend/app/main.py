@@ -19,7 +19,7 @@ from .engine import brief as brief_mod
 from .connectors import csv_import
 from .engine import extract, kpis, llm
 from .engine.evaluate import evaluate
-from .models import Action, Brief, Client, Conversation, SessionLocal, Signal, init_db
+from .models import PENDING_KIND, Action, Brief, Client, Conversation, SessionLocal, Signal, init_db
 from .packs import load_pack, public_view
 
 app = FastAPI(title="Renewal Radar API", version="0.2")
@@ -98,7 +98,7 @@ def overview(client_id: str, window: int = 90, session=Depends(db)):
                  "value_at_risk": sum(c["contract"]["annual_value"] for c in high),
                  "total_value": sum(c["contract"]["annual_value"] for c in ctxs),
                  "signals": sum(len(c["signals"]) for c in ctxs),
-                 "open_actions": sum(len(v) for v in drafts.values()),
+                 "open_actions": sum(len(drafts[c["account"]["id"]]) for c in ctxs),
                  "decided_actions": len(done)},
         "outlook": kpis.compute(ctxs),
         "this_week": week,
@@ -124,7 +124,8 @@ def account(client_id: str, account_id: int, session=Depends(db)):
     payload, source = brief_for(session, client_id, ctx, pack)
     from .models import ActivityPoint
     act = session.scalars(select(ActivityPoint).where(ActivityPoint.account_id == account_id).order_by(ActivityPoint.day)).all()
-    convs = session.scalars(select(Conversation).where(Conversation.account_id == account_id).order_by(Conversation.date.desc())).all()
+    convs = session.scalars(select(Conversation).where(Conversation.account_id == account_id, Conversation.kind != PENDING_KIND)
+                            .order_by(Conversation.date.desc())).all()
     acts = session.scalars(select(Action).where(Action.account_id == account_id).order_by(Action.id)).all()
     timeline = [{"date": c.date.isoformat(), "kind": "conversation", "title": c.title, "conversation_id": c.id,
                  "signals": [pack["signals"][s["signal_type"]]["label"] for s in ctx["signals"] if s["conversation_id"] == c.id]}
@@ -282,7 +283,10 @@ def import_csv(client_id: str, body: ImportIn, session=Depends(db)):
     result = csv_import.run(session, client, pack, body.csv)
     if "error" in result:
         raise HTTPException(422, result["error"])
-    ctxs = pipeline.build_outputs_for(session, client, result["touched"])
+    new_ids = [r["account_id"] for r in result["rows"] if r["status"] == "added"]
+    old_ids = {r["account_id"] for r in result["rows"] if r["status"] == "updated"}
+    ctxs = pipeline.build_outputs_for(session, client, new_ids)         # briefs only for the new customers; existing ones stay untouched
+    ctxs += [c for c in service.contexts(session, client_id, window=3650, include_pending=True) if c["account"]["id"] in old_ids]
     by_id = {c["account"]["id"]: c for c in ctxs}
     for line in result["rows"]:
         c = by_id.get(line.get("account_id"))
@@ -291,10 +295,27 @@ def import_csv(client_id: str, body: ImportIn, session=Depends(db)):
             line.update(score=row["score"], band=row["band"], days_to_renewal=row["days_to_renewal"], signals=row["signals"],
                         on_dashboard=row["band"] == "high" and 0 <= row["days_to_renewal"] <= 90,
                         in_renewals=0 <= row["days_to_renewal"] <= 90)
+    result["pending"] = bool(result["touched"])
     result["summary"] = {k: sum(1 for r in result["rows"] if r["status"] == k) for k in ("added", "updated", "skipped")}
     result["summary"]["flags"] = sum(len(r.get("signals", [])) for r in result["rows"])
     del result["touched"]
     return result
+
+
+@app.post("/api/clients/{client_id}/import/accept")
+def accept_import(client_id: str, session=Depends(db)):
+    client, pack = get_client(client_id, session)
+    res = csv_import.accept(session, client_id)
+    if res["refresh"]:
+        pipeline.build_outputs_for(session, client, res["refresh"])      # existing customers get their new flags into the brief
+    return {k: v for k, v in res.items() if k != "refresh"}
+
+
+@app.delete("/api/clients/{client_id}/import/pending")
+def decline_import(client_id: str, session=Depends(db)):
+    client, pack = get_client(client_id, session)
+    res = csv_import.decline(session, client_id)
+    return {k: v for k, v in res.items() if k != "refresh"}
 
 
 @app.delete("/api/clients/{client_id}/import")

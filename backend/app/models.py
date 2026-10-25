@@ -13,6 +13,12 @@ engine = create_engine(DB_URL, connect_args={"check_same_thread": False} if DB_U
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 
+# An upload waits for a decision before it counts: its customers carry employees == PENDING_EMPLOYEES and its calls
+# on existing customers carry kind == PENDING_KIND. Accepting turns them into ordinary imported data.
+PENDING_EMPLOYEES = -1
+PENDING_KIND = "import_pending"
+
+
 class Base(DeclarativeBase):
     pass
 

@@ -18,7 +18,7 @@ from sqlalchemy import delete, select
 
 from ..engine import extract, identity, llm
 from ..models import (Account, Action, ActivityPoint, Brief, Contract, Conversation, FeatureUsage, Invoice, Reassurance,
-                      Signal, Ticket, UsageStat)
+                      Signal, Ticket, UsageStat, PENDING_EMPLOYEES, PENDING_KIND)
 
 MAX_ROWS = 60
 SAME_COMPANY = 0.92          # at or above: the row is about a customer we already have
@@ -151,30 +151,61 @@ def parse(text: str) -> tuple[list[dict], list[str]]:
     return out, notes
 
 
-def remove_imported(session, client_id: str) -> dict:
-    """Take back everything an upload added: its conversations and flags, and customers that only existed because of it."""
+def _delete_accounts(session, ids: list[int]):
+    for model in (Action, Brief, ActivityPoint, Contract, Ticket, Invoice, UsageStat, FeatureUsage):
+        if ids:
+            session.execute(delete(model).where(model.account_id.in_(ids)))
+    if ids:
+        session.execute(delete(Account).where(Account.id.in_(ids)))
+
+
+def _remove(session, client_id: str, kinds: set, employees: set) -> dict:
+    """Delete calls of the given kinds (with their flags) and the customers that exist only because of an upload."""
     convs = session.scalars(select(Conversation).where(Conversation.client_id == client_id)).all()
-    by_acc: dict[int, list] = {}
-    for c in convs:
-        by_acc.setdefault(c.account_id, []).append(c)
-    imported = [c for c in convs if c.kind == KIND]
-    only = [a for a, cs in by_acc.items() if all(c.kind == KIND for c in cs)]
-    ids = [c.id for c in imported]
+    gone = [c for c in convs if c.kind in kinds]
+    accounts = session.scalars(select(Account).where(Account.client_id == client_id, Account.employees.in_(employees))).all()
+    only = [a.id for a in accounts]
+    ids = [c.id for c in gone]
     if ids:
         session.execute(delete(Signal).where(Signal.conversation_id.in_(ids)))
         session.execute(delete(Reassurance).where(Reassurance.conversation_id.in_(ids)))
         session.execute(delete(Conversation).where(Conversation.id.in_(ids)))
-    for model in (Action, Brief, ActivityPoint, Contract, Ticket, Invoice, UsageStat, FeatureUsage):
-        if only:
-            session.execute(delete(model).where(model.account_id.in_(only)))
-    if only:
-        session.execute(delete(Account).where(Account.id.in_(only)))
+    only_convs = [c.id for c in convs if c.account_id in only and c.id not in ids]
+    if only_convs:                                            # calls of removed customers go with them
+        session.execute(delete(Signal).where(Signal.conversation_id.in_(only_convs)))
+        session.execute(delete(Reassurance).where(Reassurance.conversation_id.in_(only_convs)))
+        session.execute(delete(Conversation).where(Conversation.id.in_(only_convs)))
+    _delete_accounts(session, only)
     session.commit()
-    touched = sorted({c.account_id for c in imported} - set(only))
-    return {"customers_removed": len(only), "calls_removed": len(imported), "refresh": touched}
+    touched = sorted({c.account_id for c in gone} - set(only))
+    return {"customers_removed": len(only), "calls_removed": len(gone), "refresh": touched}
+
+
+def decline(session, client_id: str) -> dict:
+    """Throw away the waiting upload."""
+    return _remove(session, client_id, {PENDING_KIND}, {PENDING_EMPLOYEES})
+
+
+def accept(session, client_id: str) -> dict:
+    """Add the waiting upload to the lists."""
+    accs = session.scalars(select(Account).where(Account.client_id == client_id, Account.employees == PENDING_EMPLOYEES)).all()
+    convs = session.scalars(select(Conversation).where(Conversation.client_id == client_id, Conversation.kind == PENDING_KIND)).all()
+    for a in accs:
+        a.employees = 0
+    for c in convs:
+        c.kind = KIND
+    session.commit()
+    new = {a.id for a in accs}
+    return {"customers": len(accs), "calls": len(convs), "refresh": sorted({c.account_id for c in convs} - new)}
+
+
+def remove_imported(session, client_id: str) -> dict:
+    """Take back everything uploads added earlier (accepted or waiting)."""
+    return _remove(session, client_id, {KIND, PENDING_KIND}, {0, PENDING_EMPLOYEES})
 
 
 def run(session, client, pack: dict, text: str, use_llm: Optional[bool] = None) -> dict:
+    decline(session, client.id)                                  # a new upload replaces one that is still waiting
     rows, file_notes = parse(text)
     if len(rows) > MAX_ROWS:
         file_notes.append(f"only the first {MAX_ROWS} of {len(rows)} rows were read")
@@ -237,7 +268,7 @@ def run(session, client, pack: dict, text: str, use_llm: Optional[bool] = None) 
             if monthly is None or monthly <= 0:
                 line["reason"] = "no contract value (use annual_value or monthly_value)"
                 continue
-            acc = Account(client_id=client.id, name=name, segment=r.get("segment") or "Imported", employees=0,
+            acc = Account(client_id=client.id, name=name, segment=r.get("segment") or "Imported", employees=PENDING_EMPLOYEES,
                           contact_name=r.get("contact_name", ""), contact_role=r.get("contact_role", ""), owner=client.user_name)
             session.add(acc)
             session.flush()
@@ -267,7 +298,7 @@ def run(session, client, pack: dict, text: str, use_llm: Optional[bool] = None) 
 
         if notes:
             when = _date(r.get("call_date", ""), fixes) or today - dt.timedelta(days=3)
-            conv = Conversation(client_id=client.id, account_id=acc.id, kind=KIND, date=min(when, today), title="Imported call notes",
+            conv = Conversation(client_id=client.id, account_id=acc.id, kind=PENDING_KIND, date=min(when, today), title="Imported call notes",
                                 transcript=_transcript(notes, acc.contact_name, acc.contact_role, acc.name, client.user_name, staff))
             session.add(conv)
             new_convs.append((conv, line))
