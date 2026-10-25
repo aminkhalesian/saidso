@@ -18,6 +18,15 @@ new_decision_maker:
     - "Two-quarter results one-pager"
     - "Introduction to the team on the account"
     - "A 90-day plan idea"
+  why: "A new decision maker reopens the supplier choice, and the first meeting decides how we are seen."
+  questions:
+    - "What are your priorities for the first months in your role?"
+    - "How do you decide which agencies to keep, and what would you like to see from us?"
+    - "Which results from our work so far matter most to you?"
+  interventions:
+    - "An introduction meeting built around the new person's goals, with results from the past year."
+    - "A joint planning session for the next quarter that gives them an early win."
+  followup: "Book the first meeting this week and send a short summary of what we have delivered."
   done_when: "The intro has happened, the new lead's priorities are written down and a next meeting is booked."
 
 agency_review:
@@ -38,6 +47,15 @@ agency_review:
     - "Results deck"
     - "References"
     - "Pricing options"
+  why: "An agency review means the contract is competing against pitches, and we must show what is hard to replace."
+  questions:
+    - "What triggered the review, and what would you change?"
+    - "Which criteria matter most, and when will you decide?"
+    - "Who is involved in the decision, and what would they want from us?"
+  interventions:
+    - "A proposal for the review with results and a clear plan for next year."
+    - "A working session that shows the team's knowledge of their business."
+  followup: "Submit the review material before their deadline and agree a date for feedback."
   done_when: "You know the timing, criteria and decision-makers, and the pitch pack is drafted before the RFP lands."
 
 scope_pressure:
@@ -56,6 +74,15 @@ scope_pressure:
   bring:
     - "Workstream results table"
     - "Two options with prices"
+  why: "Scope pressure usually means the team is stretched and the client sees less value for the same retainer."
+  questions:
+    - "Which deliverables are growing fastest, and which add the least value to you?"
+    - "What would a realistic scope for the current budget look like?"
+    - "How should we prioritize if hours stay fixed?"
+  interventions:
+    - "A renegotiated scope that matches the hours in the retainer."
+    - "A prioritised plan with clear trade-offs the client can approve."
+  followup: "Send a written scope proposal and agree a date to confirm it."
   done_when: "Two options are presented and the client has chosen one or set a decision date. No silent scope cut."
 
 value_doubt:
@@ -75,6 +102,15 @@ value_doubt:
     - "KPI against target table"
     - "Two fixes with timeline"
     - "One-page ROI answer"
+  why: "Doubt about value is rarely voiced twice, and unanswered doubt becomes the reason not to renew."
+  questions:
+    - "Which results do you feel you are not seeing?"
+    - "What would convince you we are worth the retainer?"
+    - "Which numbers do you report internally about our work?"
+  interventions:
+    - "A results report mapped to their own goals, with open gaps named honestly."
+    - "A shorter test period on the area they doubt most."
+  followup: "Send the report before the next meeting and ask for their reaction in writing."
   done_when: "The review has happened, the fixes are agreed and monthly reporting metrics are set."
 
 approval_delays:
@@ -94,6 +130,15 @@ approval_delays:
     - "List of open items with dates"
     - "Impact on campaign dates"
     - "A proposed approval routine"
+  why: "Slow approvals mean the client side is not owning the work, and delays hurt both quality and renewal."
+  questions:
+    - "Where do approvals get stuck on your side?"
+    - "Who needs to sign off, and can some decisions move to one person?"
+    - "Which deadlines are fixed, and which can move?"
+  interventions:
+    - "A fixed approval calendar with named reviewers and deadlines."
+    - "A lighter review process for routine deliverables."
+  followup: "Agree the approval calendar in writing and review it after the next two deliverables."
   done_when: "The approval slot is booked and every open item has an owner and a date."
 
 payment_delays:
@@ -111,4 +156,13 @@ payment_delays:
   bring:
     - "List of open invoices and PO numbers"
     - "Payment terms from the contract"
+  why: "Late payments are often the first sign of internal friction, and they affect how the renewal is handled."
+  questions:
+    - "Is there anything blocking payment of the open invoices?"
+    - "Has the approval process or the budget owner changed?"
+    - "Would a different invoicing schedule or contact make this easier?"
+  interventions:
+    - "A direct line to their finance contact and a corrected invoice process."
+    - "Quarterly invoicing if their policy and ours allow it."
+  followup: "Confirm the payment date in writing and check the invoice status a week later."
   done_when: "Accounts payable has confirmed a payment date in writing."

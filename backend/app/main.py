@@ -48,6 +48,7 @@ def action_dict(a: Action) -> dict:
 def brief_for(session, client_id: str, ctx, pack) -> tuple[dict, str]:
     payload, source = service.stored_brief(session, ctx["account"]["id"])
     if payload is None:
+        service.with_sources(session, client_id, ctx, pack)
         payload, source = brief_mod.make(ctx, pack)
         session.add(Brief(account_id=ctx["account"]["id"], client_id=client_id, payload=payload, source=source))
         session.commit()
@@ -174,11 +175,12 @@ def signal_feedback(signal_id: int, fb: Feedback, session=Depends(db)):
     client, pack = get_client(s.client_id, session)
     ctx = service.context(session, s.client_id, s.account_id)
     if ctx:  # a dismissed flag changes the score, the brief and the drafted actions
+        service.with_sources(session, s.client_id, ctx, pack)
         payload, source = brief_mod.make(ctx, pack)
         b = session.get(Brief, s.account_id)
         if b:
             b.payload, b.source = payload, source
-        actions_mod.draft_for(session, s.client_id, ctx, pack)
+        actions_mod.draft_for(session, s.client_id, ctx, pack, plan=payload.get("plan"))
         session.commit()
     return {"id": s.id, "feedback": s.feedback}
 

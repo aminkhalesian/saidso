@@ -23,11 +23,12 @@ def build_outputs(session, client: Client, window: int = 90, llm_emails: bool = 
     if llm.enabled():
         print(f"  {client.name}: writing {len(ctxs)} briefs with the AI…")
     for ctx in ctxs:
+        service.with_sources(session, client.id, ctx, pack)
         payload, source = brief.make(ctx, pack)
         session.add(Brief(account_id=ctx["account"]["id"], client_id=client.id, payload=payload, source=source,
                           created_at=dt.datetime.now()))
         if ctx["score"]["band"] != "low":
-            n_actions += actions.draft_for(session, client.id, ctx, pack, use_llm_emails=llm_emails)
+            n_actions += actions.draft_for(session, client.id, ctx, pack, use_llm_emails=llm_emails, plan=payload.get("plan"))
     session.commit()
     return {"actions": n_actions}
 
@@ -39,7 +40,16 @@ def rebuild_actions(session, client: Client, window: int = 90, llm_emails: bool 
     n = 0
     for ctx in service.contexts(session, client.id, window=window):
         if ctx["score"]["band"] != "low":
-            n += actions.draft_for(session, client.id, ctx, pack, use_llm_emails=llm_emails)
+            payload, _ = service.stored_brief(session, ctx["account"]["id"])
+            if payload is None or "plan" not in payload:           # an older brief: write a fresh one
+                service.with_sources(session, client.id, ctx, pack)
+                payload, source = brief.make(ctx, pack)
+                b = session.get(Brief, ctx["account"]["id"])
+                if b:
+                    b.payload, b.source = payload, source
+                else:
+                    session.add(Brief(account_id=ctx["account"]["id"], client_id=client.id, payload=payload, source=source))
+            n += actions.draft_for(session, client.id, ctx, pack, use_llm_emails=llm_emails, plan=payload.get("plan"))
     session.commit()
     return {"actions": n}
 

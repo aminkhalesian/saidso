@@ -70,6 +70,39 @@ export function Account() {
                 </p>
               ))}
             </div>
+            {brief.assessment && (
+              <p className="mt-4 max-w-[68ch] border-l-2 border-ink-3 pl-3 text-[0.97rem] text-ink-2">
+                <span className="font-semibold text-ink">Overall: </span>
+                {brief.assessment.text}
+                {brief.assessment.evidence.map((id: string) => <Cite key={id} id={id} onClick={() => jump(id)} />)}
+              </p>
+            )}
+            {brief.drivers?.length > 0 && (
+              <div className="mt-4 max-w-[68ch]">
+                <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-3">Main risk drivers</h4>
+                <ul className="space-y-2 text-[0.95rem]">
+                  {brief.drivers.map((d: any, i: number) => (
+                    <li key={i}>
+                      <span className="font-semibold">{d.title}.</span> <span className="text-ink-2">{d.why_it_matters}</span>
+                      {d.evidence.map((id: string) => <Cite key={id} id={id} onClick={() => jump(id)} />)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {brief.reassuring?.length > 0 && (
+              <div className="mt-4 max-w-[68ch]">
+                <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-low">Reassuring evidence</h4>
+                <ul className="space-y-1.5 text-[0.95rem] text-ink-2">
+                  {brief.reassuring.map((r: any, i: number) => (
+                    <li key={i}>
+                      {r.text}
+                      {r.evidence.map((id: string) => <Cite key={id} id={id} onClick={() => jump(id)} />)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="mt-4 rounded-lg bg-act-soft px-4 py-3 text-[0.97rem]">
               <span className="font-semibold text-act">Next step: </span>
               {brief.next_step.text}
@@ -92,7 +125,7 @@ export function Account() {
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <span className="flex items-center gap-2 text-sm font-semibold">
                         <span className="rounded bg-act px-1.5 text-[0.68rem] font-bold leading-[1.15rem] text-white">{e.id}</span>
-                        {e.kind === "signal" ? e.label : e.kind === "activity" ? v.activity : e.kind === "capacity" ? v.capacity : v.renewal}
+                        {e.kind === "signal" || e.label ? e.label : e.kind === "activity" ? v.activity : e.kind === "capacity" ? v.capacity : v.renewal}
                       </span>
                       {sig && (
                         <span className="flex items-center gap-1">
@@ -161,10 +194,10 @@ export function Account() {
                 <li key={p.label}>
                   <div className="mb-1 flex justify-between text-xs">
                     <span className="text-ink-2">{p.label}</span>
-                    <span className="num font-semibold">{p.points} <span className="font-normal text-ink-3">of {p.max}</span></span>
+                    <span className="num font-semibold">{p.points < 0 ? `−${-p.points}` : p.points} <span className="font-normal text-ink-3">{p.points < 0 ? "good news" : `of ${p.max}`}</span></span>
                   </div>
                   <div className="h-1.5 rounded-full bg-line">
-                    <div className="h-full rounded-full bg-act" style={{ width: `${(p.points / p.max) * 100}%` }} />
+                    <div className="h-full rounded-full bg-act" style={{ width: `${(Math.abs(p.points) / p.max) * 100}%`, background: p.points < 0 ? "var(--color-low)" : undefined }} />
                   </div>
                 </li>
               ))}

@@ -65,11 +65,30 @@ def why_now(sig: dict, ctx: dict, pack: dict) -> str:
     return "\n".join(lines)
 
 
-def play_body(play: dict, sig: dict, ctx: dict, pack: dict, email: Optional[str] = None) -> str:
+def _cite(item: dict) -> str:
+    return " [" + ", ".join(item["evidence"]) + "]" if item.get("evidence") else ""
+
+
+def plan_sections(plan: dict) -> list[str]:
+    """The conversation plan written from this account's own evidence. Ids match the Evidence list on the account page."""
+    out = ["", "MAIN PROBLEM", plan["problem"]["text"] + _cite(plan["problem"]),
+           "", "OBJECTIVE", plan["objective"]["text"] + _cite(plan["objective"]), "", "QUESTIONS TO ASK"]
+    out += [f"{i}. {q['text']}{_cite(q)}" for i, q in enumerate(plan["questions"], 1)]
+    out += ["", "RETENTION OPTIONS"] + [f"- {t['text']}{_cite(t)}" for t in plan["interventions"]]
+    out += ["", "FOLLOW-UP", plan["followup"]["text"] + _cite(plan["followup"])]
+    return out
+
+
+def play_body(play: dict, sig: dict, ctx: dict, pack: dict, email: Optional[str] = None, plan: Optional[dict] = None) -> str:
     f = lambda t: fill(t, ctx, pack)                                  # noqa: E731
-    out = ["WHY NOW", why_now(sig, ctx, pack), "", "GOAL", f(play["goal"]), "", "STEPS"]
+    out = ["WHY NOW", why_now(sig, ctx, pack)]
+    if plan:
+        out += plan_sections(plan) + ["", "STEPS"]
+    else:
+        out += ["", "GOAL", f(play["goal"]), "", "STEPS"]
     out += [f"{i}. {f(t)}" for i, t in enumerate(play["steps"], 1)]
-    out += ["", "WHAT TO SAY"] + [f"- {f(t)}" for t in play["say"]]
+    if not plan:
+        out += ["", "WHAT TO SAY"] + [f"- {f(t)}" for t in play["say"]]
     out += ["", "IF THEY PUSH BACK"] + [f"- {f(t)}" for t in play["pushback"]]
     out += ["", "BRING"] + [f"- {f(t)}" for t in play["bring"]]
     out += ["", "DONE WHEN", f(play["done_when"])]
@@ -93,7 +112,7 @@ def personalize(body: str, ctx: dict, sig: dict) -> Optional[str]:
         return None
 
 
-def draft_for(session, client_id: str, ctx: dict, pack: dict, use_llm_emails: bool = False) -> int:
+def draft_for(session, client_id: str, ctx: dict, pack: dict, use_llm_emails: bool = False, plan: Optional[dict] = None) -> int:
     session.execute(delete(Action).where(Action.account_id == ctx["account"]["id"], Action.status == "draft"))
     sigs = sorted([s for s in ctx["signals"] if s["feedback"] != "dismissed"],
                   key=lambda s: -pack["signals"][s["signal_type"]]["weight"] * s["confidence"])
@@ -110,7 +129,7 @@ def draft_for(session, client_id: str, ctx: dict, pack: dict, use_llm_emails: bo
                 text, source = better, "llm"
         play = load_plays(pack["id"]).get(s["signal_type"])
         if play:
-            body = play_body(play, s, ctx, pack, email=text if pb["kind"] == "email" else None)
+            body = play_body(play, s, ctx, pack, email=text if pb["kind"] == "email" else None, plan=plan if n == 0 else None)
         else:
             body = text
         session.add(Action(client_id=client_id, account_id=ctx["account"]["id"], signal_type=s["signal_type"],

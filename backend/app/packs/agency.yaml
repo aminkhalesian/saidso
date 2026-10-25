@@ -18,6 +18,7 @@ score:
   signals_max: 35
   support_max: 10           # unresolved complaints, high-priority and open tickets
   payment_max: 10           # overdue and late invoices
+  reassure_max: 10          # good news lowers the score: growing usage, invoices paid on time, no open complaints
   urgency_max: 10
   bands: {high: 50, medium: 25}
 
