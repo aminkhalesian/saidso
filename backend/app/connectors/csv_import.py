@@ -16,7 +16,7 @@ from typing import Optional
 
 from sqlalchemy import delete, select
 
-from ..engine import extract, identity
+from ..engine import extract, identity, llm
 from ..models import (Account, Action, ActivityPoint, Brief, Contract, Conversation, FeatureUsage, Invoice, Reassurance,
                       Signal, Ticket, UsageStat)
 
@@ -278,9 +278,13 @@ def run(session, client, pack: dict, text: str, use_llm: Optional[bool] = None) 
     session.flush()
 
     vendor = pack["synthetic"]["product"]
-    use = use_llm
-    for conv, line in new_convs:
-        sigs, good, src = extract.analyze_full(conv.transcript, pack, vendor, staff, use)
+    from concurrent.futures import ThreadPoolExecutor
+    use = llm.enabled() if use_llm is None else use_llm
+    if use:
+        print(f"  import: reading {len(new_convs)} conversations with the AI…")
+    with ThreadPoolExecutor(max_workers=3 if use else 1) as pool:          # the AI calls run side by side
+        results = list(pool.map(lambda cl: extract.analyze_full(cl[0].transcript, pack, vendor, staff, use), new_convs))
+    for (conv, line), (sigs, good, src) in zip(new_convs, results):
         for s in sigs:
             session.add(Signal(client_id=client.id, account_id=conv.account_id, conversation_id=conv.id, source=src, **s))
         for g in good:

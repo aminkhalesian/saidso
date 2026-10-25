@@ -36,19 +36,24 @@ def build_outputs(session, client: Client, window: int = 90, llm_emails: bool = 
 def build_outputs_for(session, client: Client, account_ids, window: int = 90, llm_emails: bool = False) -> list[dict]:
     """Brief and drafted steps for some accounts only (used after an upload). Returns their summaries."""
     pack = load_pack(client.pack_id)
-    ids, out = set(account_ids), []
+    ids = set(account_ids)
     session.execute(delete(Brief).where(Brief.account_id.in_(ids)))
+    out = []
     for ctx in service.contexts(session, client.id, window=3650):
-        if ctx["account"]["id"] not in ids:
-            continue
-        service.with_sources(session, client.id, ctx, pack)
-        payload, source = brief.make(ctx, pack)
+        if ctx["account"]["id"] in ids:
+            service.with_sources(session, client.id, ctx, pack)
+            out.append(ctx)
+    from concurrent.futures import ThreadPoolExecutor
+    if llm.enabled():
+        print(f"  {client.name}: writing {len(out)} briefs with the AI…")
+    with ThreadPoolExecutor(max_workers=3 if llm.enabled() else 1) as pool:
+        made = list(pool.map(lambda c: brief.make(c, pack), out))
+    for ctx, (payload, source) in zip(out, made):
         session.add(Brief(account_id=ctx["account"]["id"], client_id=client.id, payload=payload, source=source,
                           created_at=dt.datetime.now()))
         if brief.wants_plan(ctx):
             actions.draft_for(session, client.id, ctx, pack, use_llm_emails=llm_emails, plan=payload.get("plan"),
                               plan_source=payload.get("plan_source", "template"))
-        out.append(ctx)
     session.commit()
     return out
 
