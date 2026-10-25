@@ -34,7 +34,7 @@ def payment_points(invoices: list, today: dt.date, cfg: dict) -> float:
     return clamp(raw, 0, cfg.get("payment_max", 0))
 
 
-def reassurance_points(activity_pct: float, tickets: list, invoices: list, today: dt.date, cfg: dict) -> float:
+def reassurance_points(activity_pct: float, tickets: list, invoices: list, today: dt.date, cfg: dict, positives: int = 0) -> float:
     """Good news counts too: growing usage, invoices paid on time and no unresolved complaints lower the score."""
     cap = cfg.get("reassure_max", 0)
     if not cap:
@@ -44,11 +44,13 @@ def reassurance_points(activity_pct: float, tickets: list, invoices: list, today
         pts += 3
     if tickets and not any(t.status in ("open", "pending") and (t.category == "complaint" or t.priority == "high") for t in tickets):
         pts += 2
+    if positives:                                     # the customer said something reassuring on a call
+        pts += 3
     return clamp(pts, 0, cap)
 
 
 def score(contract, activity: list[float], signals: list, pack: dict, today: Optional[dt.date] = None,
-          tickets: Optional[list] = None, invoices: Optional[list] = None) -> dict:
+          tickets: Optional[list] = None, invoices: Optional[list] = None, positives: int = 0) -> dict:
     cfg = pack["score"]
     today = today or dt.date.today()
     days = (contract.renewal_date - today).days
@@ -63,7 +65,7 @@ def score(contract, activity: list[float], signals: list, pack: dict, today: Opt
                         for s in signals if s.feedback != "dismissed"), 0, cfg["signals_max"])
     sup_pts = support_points(tickets or [], cfg)
     pay_pts = payment_points(invoices or [], today, cfg)
-    good_pts = reassurance_points(activity_pct, tickets or [], invoices or [], today, cfg)
+    good_pts = reassurance_points(activity_pct, tickets or [], invoices or [], today, cfg, positives)
     base = max(0.0, act_pts + cap_pts + sig_pts + sup_pts + pay_pts - good_pts)
     max_base = (cfg["activity_drop_max"] + cfg["capacity_cut_max"] + cfg["signals_max"]
                 + cfg.get("support_max", 0) + cfg.get("payment_max", 0))

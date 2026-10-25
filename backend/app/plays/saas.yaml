@@ -111,7 +111,7 @@ budget_cut:
     - "Which parts of {product} could you not do without, and which are nice to have?"
   interventions:
     - "A reduced scope or seat count that fits the new budget and protects the core workflows."
-    - "Annual vs. monthly or phased terms that spread the cost, if your policy allows it."
+    - "A one-page value summary (usage, results, cost per active user) the customer can use to justify the spend, plus phased or flexible terms if your policy allows it."
   followup: "Get the renewal onto procurement's list now and confirm the approval steps and dates in writing."
   done_when: "Procurement steps and dates are known, paperwork is sent and the fallback option is ready."
 
@@ -138,7 +138,7 @@ low_adoption:
     - "What gets in the way of using {product} day to day?"
     - "Who on the team would benefit most from a short re-onboarding?"
   interventions:
-    - "A targeted re-onboarding session for the teams that stopped using it."
+    - "A hands-on training and re-onboarding session for the people who do not use it yet, built around two or three workflows that matter to them."
     - "A named internal champion with a 30-day adoption goal."
   followup: "Review usage together in two weeks and book the renewal talk once usage recovers."
   done_when: "The session has happened, a usage target is agreed and the day-14 check-in is booked."

@@ -6,7 +6,7 @@ from collections import defaultdict
 from sqlalchemy import select
 
 from .engine import scoring
-from .models import (Account, ActivityPoint, Brief, Contract, Conversation, FeatureUsage, Invoice, Signal, Ticket,
+from .models import (Reassurance, Account, ActivityPoint, Brief, Contract, Conversation, FeatureUsage, Invoice, Signal, Ticket,
                      UsageStat)
 from .packs import load_pack
 
@@ -44,6 +44,11 @@ def contexts(session, client_id: str, window: Optional[int] = None, today: Optio
     for s in session.scalars(select(Signal).where(Signal.client_id == client_id)):
         signals[s.account_id].append(s)
 
+    positives = defaultdict(list)
+    for r in session.scalars(select(Reassurance).where(Reassurance.client_id == client_id)):
+        if r.conversation_id in convs:
+            positives[r.account_id].append({"id": r.id, "quote": r.quote, "speaker": r.speaker, "conversation_id": r.conversation_id,
+                                            "date": convs[r.conversation_id].date.isoformat(), "title": convs[r.conversation_id].title})
     tickets, invoices = defaultdict(list), defaultdict(list)
     for t in session.scalars(select(Ticket).where(Ticket.client_id == client_id)):
         tickets[t.account_id].append(t)
@@ -55,11 +60,12 @@ def contexts(session, client_id: str, window: Optional[int] = None, today: Optio
         c = contracts.get(aid)
         if c is None:
             continue
-        sc = scoring.score(c, activity[aid], signals[aid], pack, today, tickets[aid], invoices[aid])
+        sc = scoring.score(c, activity[aid], signals[aid], pack, today, tickets[aid], invoices[aid], len(positives[aid]))
         if window is not None and not (0 <= sc["days_to_renewal"] <= window):
             continue
         sig = sorted((_signal_dict(s, convs[s.conversation_id]) for s in signals[aid]), key=lambda x: x["date"], reverse=True)
-        out.append({"account": _account_dict(acc), "contract": _contract_dict(c), "score": sc, "signals": sig})
+        out.append({"account": _account_dict(acc), "contract": _contract_dict(c), "score": sc, "signals": sig,
+                    "positives": sorted(positives[aid], key=lambda x: x["date"], reverse=True)})
     return sorted(out, key=lambda x: (-x["score"]["score"], x["score"]["days_to_renewal"]))
 
 
