@@ -86,9 +86,10 @@ export function ImportPanel({ clientId, customers }: { clientId: string; custome
           />
           {err && <p className="mt-2 text-sm text-high" role="alert">{err}</p>}
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            <Button onClick={run} disabled={busy}><Upload size={15} /> {busy ? "Reading the file" : "Import and score"}</Button>
+            <Button onClick={run} disabled={busy}><Upload size={15} /> {busy ? "Reading the file…" : "Import and score"}</Button>
             <Button variant="ghost" onClick={undo}><Trash2 size={15} /> Remove imported</Button>
           </div>
+          {busy && <p className="mt-2 text-sm text-ink-2" role="status">The AI is reading each customer's call notes and writing a brief. With a real AI key this can take one to two minutes for a dozen customers. Keep this page open.</p>}
           {removed && <p className="mt-2 text-sm text-low">{removed}</p>}
         </div>
 
