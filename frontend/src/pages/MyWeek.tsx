@@ -84,7 +84,7 @@ export function MyWeek() {
                     <b className={urgent ? "text-high" : ""}>{row.days_to_renewal} days</b>
                     <span className="mt-1 block h-1 rounded-full bg-paper-2"><i className="block h-full rounded-full" style={{ width: `${Math.max(6, ((90 - row.days_to_renewal) / 90) * 100)}%`, background: urgent ? BAND_FILL.high : "#111827" }} /></span>
                   </span>
-                  <span className="hidden text-right lg:block">{row.activity_pct <= -0.08 ? <Chip tone="high">{Math.round(row.activity_pct * 100)}%</Chip> : <span className="text-xs text-ink-3">{Math.round(row.activity_pct * 100)}%</span>}</span>
+                  <span className="hidden text-right lg:block">{row.usage_known === false ? <span className="text-xs text-ink-3">–</span> : row.activity_pct <= -0.08 ? <Chip tone="high">{Math.round(row.activity_pct * 100)}%</Chip> : <span className="text-xs text-ink-3">{Math.round(row.activity_pct * 100)}%</span>}</span>
                   <ChevronDown size={18} className={`text-ink-3 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                 </button>
                 {!isOpen && row.reason?.kind === "signal" && (

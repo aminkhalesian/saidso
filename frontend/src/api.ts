@@ -23,10 +23,10 @@ export const api = {
   sample: (c: string) => req<{ transcript: string }>(`/clients/${c}/sample-transcript`),
   analyze: (c: string, transcript: string) =>
     req<any>(`/clients/${c}/analyze`, { method: "POST", body: JSON.stringify({ transcript }) }),
-  decide: (id: number, status: "approved" | "dismissed" | "draft", body?: string) =>
-    req<any>(`/actions/${id}`, { method: "POST", body: JSON.stringify({ status, body }) }),
-  feedback: (id: number, feedback: "confirmed" | "dismissed" | "open") =>
-    req<any>(`/signals/${id}/feedback`, { method: "POST", body: JSON.stringify({ feedback }) }),
+  decide: (client: string, id: number, status: "approved" | "dismissed" | "draft", body?: string) =>
+    req<any>(`/clients/${client}/actions/${id}`, { method: "POST", body: JSON.stringify({ status, body }) }),
+  feedback: (client: string, id: number, feedback: "confirmed" | "dismissed" | "open") =>
+    req<any>(`/clients/${client}/signals/${id}/feedback`, { method: "POST", body: JSON.stringify({ feedback }) }),
 };
 
 export const euro = (n: number) =>

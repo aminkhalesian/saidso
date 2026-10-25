@@ -112,7 +112,8 @@ def personalize(body: str, ctx: dict, sig: dict) -> Optional[str]:
         return None
 
 
-def draft_for(session, client_id: str, ctx: dict, pack: dict, use_llm_emails: bool = False, plan: Optional[dict] = None) -> int:
+def draft_for(session, client_id: str, ctx: dict, pack: dict, use_llm_emails: bool = False, plan: Optional[dict] = None,
+              plan_source: str = "template") -> int:
     session.execute(delete(Action).where(Action.account_id == ctx["account"]["id"], Action.status == "draft"))
     sigs = sorted([s for s in ctx["signals"] if s["feedback"] != "dismissed"],
                   key=lambda s: -pack["signals"][s["signal_type"]]["weight"] * s["confidence"])
@@ -130,6 +131,8 @@ def draft_for(session, client_id: str, ctx: dict, pack: dict, use_llm_emails: bo
         play = load_plays(pack["id"]).get(s["signal_type"])
         if play:
             body = play_body(play, s, ctx, pack, email=text if pb["kind"] == "email" else None, plan=plan if n == 0 else None)
+            if n == 0 and plan:                      # the label says AI only when the AI wrote the plan
+                source = "llm" if plan_source == "llm" else "template"
         else:
             body = text
         session.add(Action(client_id=client_id, account_id=ctx["account"]["id"], signal_type=s["signal_type"],

@@ -28,7 +28,7 @@ def build_outputs(session, client: Client, window: int = 90, llm_emails: bool = 
         session.add(Brief(account_id=ctx["account"]["id"], client_id=client.id, payload=payload, source=source,
                           created_at=dt.datetime.now()))
         if brief.wants_plan(ctx):
-            n_actions += actions.draft_for(session, client.id, ctx, pack, use_llm_emails=llm_emails, plan=payload.get("plan"))
+            n_actions += actions.draft_for(session, client.id, ctx, pack, use_llm_emails=llm_emails, plan=payload.get("plan"), plan_source=payload.get("plan_source", "template"))
     session.commit()
     return {"actions": n_actions}
 
@@ -49,7 +49,7 @@ def rebuild_actions(session, client: Client, window: int = 90, llm_emails: bool 
                     b.payload, b.source = payload, source
                 else:
                     session.add(Brief(account_id=ctx["account"]["id"], client_id=client.id, payload=payload, source=source))
-            n += actions.draft_for(session, client.id, ctx, pack, use_llm_emails=llm_emails, plan=payload.get("plan"))
+            n += actions.draft_for(session, client.id, ctx, pack, use_llm_emails=llm_emails, plan=payload.get("plan"), plan_source=payload.get("plan_source", "template"))
     session.commit()
     return {"actions": n}
 

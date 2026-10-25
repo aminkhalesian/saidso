@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useParams } from "react-router-dom";
 import { Check, ListTodo, Mail, CalendarDays, Pencil, X, Undo2 } from "lucide-react";
 import { api } from "../api";
 import { Button } from "./ui";
@@ -52,6 +53,7 @@ function PlayBody({ body }: { body: string }) {
 }
 
 export function ActionCard({ action, compact = false, onChange }: { action: any; compact?: boolean; onChange?: (a: any) => void }) {
+  const { clientId = "" } = useParams();
   const [a, setA] = useState(action);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(action.body);
@@ -63,7 +65,7 @@ export function ActionCard({ action, compact = false, onChange }: { action: any;
   async function decide(status: "approved" | "dismissed" | "draft") {
     setBusy(true);
     try {
-      const updated = await api.decide(a.id, status, editing ? draft : undefined);
+      const updated = await api.decide(clientId, a.id, status, editing ? draft : undefined);
       setA(updated);
       setEditing(false);
       onChange?.(updated);
@@ -96,7 +98,7 @@ export function ActionCard({ action, compact = false, onChange }: { action: any;
           <p className="text-sm font-semibold leading-snug">{a.title}</p>
           <p className="text-xs text-ink-3">
             {kind.label}
-            {a.source === "llm" ? ", tailored by AI" : ""}
+            {a.source === "llm" ? " · written by AI" : " · template draft"}
             {compact && (
               <button className="ml-2 font-medium text-act hover:underline" onClick={() => setOpen(!open)}>
                 {open ? "Hide" : "Preview"}

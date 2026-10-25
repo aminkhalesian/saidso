@@ -108,7 +108,7 @@ def summary_row(c: dict, pack: dict) -> dict:
     return {"account_id": c["account"]["id"], "name": c["account"]["name"], "segment": c["account"]["segment"],
             "score": c["score"]["score"], "band": c["score"]["band"], "days_to_renewal": c["score"]["days_to_renewal"],
             "renewal_date": c["contract"]["renewal_date"], "annual_value": c["contract"]["annual_value"],
-            "activity_pct": c["score"]["activity_pct"], "signals": labels}
+            "activity_pct": c["score"]["activity_pct"], "usage_known": c["score"].get("usage_known", True), "signals": labels}
 
 
 # ------------------------------------------------------------------ account detail
@@ -131,11 +131,14 @@ def account(client_id: str, account_id: int, session=Depends(db)):
                          "title": f"{pack['vocabulary']['capacity']}: {ctx['contract']['capacity_prev']} → {ctx['contract']['capacity']}"})
     timeline.append({"date": ctx["contract"]["renewal_date"], "kind": "renewal", "title": pack["vocabulary"]["renewal"]})
     timeline.sort(key=lambda t: t["date"], reverse=True)
+    service.with_sources(session, client_id, ctx, pack)
+    fresh = brief_mod.fingerprint(ctx, brief_mod.build_evidence(ctx, pack))
     return {**ctx, "brief": payload, "brief_source": source,
+            "brief_stale": bool(payload.get("fingerprint")) and payload["fingerprint"] != fresh,
             "activity": [{"day": p.day.isoformat(), "value": p.value} for p in act],
             "conversations": [{"id": c.id, "date": c.date.isoformat(), "title": c.title, "transcript": c.transcript} for c in convs],
             "actions": [action_dict(a) for a in acts], "timeline": timeline,
-            "sources": service.account_sources(session, client_id, account_id, pack, ctx)}
+            "sources": ctx["sources"]}
 
 
 # ------------------------------------------------------------------ write side: people stay in control
@@ -144,10 +147,10 @@ class ActionUpdate(BaseModel):
     body: Optional[str] = None
 
 
-@app.post("/api/actions/{action_id}")
-def update_action(action_id: int, upd: ActionUpdate, session=Depends(db)):
+@app.post("/api/clients/{client_id}/actions/{action_id}")
+def update_action(client_id: str, action_id: int, upd: ActionUpdate, session=Depends(db)):
     a = session.get(Action, action_id)
-    if a is None:
+    if a is None or a.client_id != client_id:                 # another client's action is "not found", never editable
         raise HTTPException(404)
     if upd.status not in {"approved", "dismissed", "draft"}:
         raise HTTPException(422, "status must be approved, dismissed or draft")
@@ -163,10 +166,10 @@ class Feedback(BaseModel):
     feedback: str
 
 
-@app.post("/api/signals/{signal_id}/feedback")
-def signal_feedback(signal_id: int, fb: Feedback, session=Depends(db)):
+@app.post("/api/clients/{client_id}/signals/{signal_id}/feedback")
+def signal_feedback(client_id: str, signal_id: int, fb: Feedback, session=Depends(db)):
     s = session.get(Signal, signal_id)
-    if s is None:
+    if s is None or s.client_id != client_id:
         raise HTTPException(404)
     if fb.feedback not in {"confirmed", "dismissed", "open"}:
         raise HTTPException(422, "feedback must be confirmed, dismissed or open")
@@ -180,7 +183,7 @@ def signal_feedback(signal_id: int, fb: Feedback, session=Depends(db)):
         b = session.get(Brief, s.account_id)
         if b:
             b.payload, b.source = payload, source
-        actions_mod.draft_for(session, s.client_id, ctx, pack, plan=payload.get("plan"))
+        actions_mod.draft_for(session, s.client_id, ctx, pack, plan=payload.get("plan"), plan_source=payload.get("plan_source", "template"))
         session.commit()
     return {"id": s.id, "feedback": s.feedback}
 

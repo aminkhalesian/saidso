@@ -50,7 +50,10 @@ def build_evidence(ctx: dict, pack: dict) -> list[dict]:
              "Customer reassurance", quote=r["quote"], speaker=r["speaker"], date=r["date"], title=r["title"],
              conversation_id=r["conversation_id"])
     sc, c = ctx["score"], ctx["contract"]
-    if sc["activity_pct"] <= -0.08:
+    if not sc.get("usage_known", True):
+        _add(ev, "usage_unknown", f"No usable {v['activity'].lower()} data for this account, so usage is not part of the score.",
+             "neutral", v["activity"])
+    elif sc["activity_pct"] <= -0.08:
         _add(ev, "activity", f"{v['activity']} down {abs(sc['activity_pct']):.0%} over the last 14 days vs. the earlier baseline.",
              "risk", v["activity"], pct=sc["activity_pct"])
     elif sc["activity_pct"] >= 0.03:
@@ -105,6 +108,13 @@ def _items(payload: dict) -> list[dict]:
     out += payload.get("reassuring", [])
     out += [{"text": d.get("title", "") + " " + d.get("why_it_matters", ""), "evidence": d.get("evidence")} for d in payload.get("drivers", [])]
     return out
+
+
+def fingerprint(ctx: dict, ev: list[dict]) -> str:
+    """Identifies the data a brief was written from. Day counters are left out so a brief does not go stale every midnight."""
+    import hashlib
+    parts = [ctx["score"]["band"]] + [e["text"] for e in ev if e["kind"] != "renewal"]
+    return hashlib.sha1("\n".join(parts).encode()).hexdigest()[:16]
 
 
 def validate(payload: dict, ev: list[dict]) -> bool:
@@ -265,4 +275,4 @@ def make(ctx: dict, pack: dict) -> tuple[dict, str]:
     if result is None:
         result = template(ctx, ev, pack)
     plan, plan_source = make_plan(ctx, ev, pack)
-    return {"evidence": ev, **result, "plan": plan, "plan_source": plan_source}, source
+    return {"evidence": ev, **result, "plan": plan, "plan_source": plan_source, "fingerprint": fingerprint(ctx, ev)}, source

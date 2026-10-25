@@ -49,14 +49,21 @@ def reassurance_points(activity_pct: float, tickets: list, invoices: list, today
     return clamp(pts, 0, cap)
 
 
+MIN_USAGE_POINTS = 28      # 14 recent days plus at least 14 earlier days; with less we do not know the trend
+
+
 def score(contract, activity: list[float], signals: list, pack: dict, today: Optional[dt.date] = None,
           tickets: Optional[list] = None, invoices: Optional[list] = None, positives: int = 0) -> dict:
     cfg = pack["score"]
     today = today or dt.date.today()
     days = (contract.renewal_date - today).days
-    recent = mean(activity[-14:]) if activity else 0
-    baseline = (mean(activity[:45]) if len(activity) >= 45 else mean(activity) if activity else 0) or 1
-    activity_pct = (recent - baseline) / baseline
+    usage_known = len(activity) >= MIN_USAGE_POINTS
+    if usage_known:
+        recent = mean(activity[-14:])
+        baseline = (mean(activity[:45]) if len(activity) >= 45 else mean(activity[:-14])) or 1
+        activity_pct = (recent - baseline) / baseline
+    else:                                           # no or too little usage data: unknown, never "zero usage"
+        activity_pct = 0.0
     cap_pct = (contract.capacity_prev - contract.capacity) / contract.capacity_prev if contract.capacity_prev else 0
 
     act_pts = clamp(-activity_pct * 100 * cfg["activity_drop_max"] / 30, 0, cfg["activity_drop_max"])
@@ -74,7 +81,7 @@ def score(contract, activity: list[float], signals: list, pack: dict, today: Opt
     total = round(clamp(base + urgency, 0, 100))
     v = pack["vocabulary"]
     return {
-        "score": total, "band": band(total, pack), "days_to_renewal": days,
+        "score": total, "band": band(total, pack), "days_to_renewal": days, "usage_known": usage_known,
         "activity_pct": round(activity_pct, 4), "capacity_pct": round(cap_pct, 4),
         "components": [
             {"label": f"{v['activity']} trend", "points": round(act_pts), "max": cfg["activity_drop_max"]},
