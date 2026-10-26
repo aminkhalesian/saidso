@@ -7,7 +7,7 @@ export const STATIC = import.meta.env.VITE_STATIC === "1";
 
 function findAction(id: number): any {
   for (const [k, v] of Object.entries<any>(snapshot)) {
-    if (k.endsWith("/overview")) {
+    if (k.includes("/overview")) {
       for (const r of v.this_week ?? []) if (r.action?.id === id) return r.action;
     } else if (/\/accounts\/\d+$/.test(k)) {
       const a = (v.actions ?? []).find((x: any) => x.id === id);

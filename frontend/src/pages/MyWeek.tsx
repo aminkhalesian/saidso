@@ -5,12 +5,13 @@ import { api, euro, euroShort } from "../api";
 import { useAsync, useClient } from "../context";
 import { ActionCard } from "../components/ActionCard";
 import { SortHead, useSort } from "../components/sort";
-import { BAND_FILL, Chip, ErrorNote, Initials, Kpi, KpiStrip, Loading, Panel, Quote, RiskPill, ScoreRing } from "../components/ui";
+import { BAND_FILL, Chip, ErrorNote, Initials, Kpi, KpiStrip, Loading, Panel, Quote, RiskPill, ScoreRing, Segmented } from "../components/ui";
 
 export function MyWeek() {
   const { clientId = "" } = useParams();
   const client = useClient(clientId);
-  const { data, error } = useAsync(() => api.overview(clientId), [clientId]);
+  const [window, setWindow] = useState(90);
+  const { data, error } = useAsync(() => api.overview(clientId, window), [clientId, window]);
   const [open, setOpen] = useState<number | null>(null);
   const { sort, toggle, apply } = useSort("score");
 
@@ -38,9 +39,12 @@ export function MyWeek() {
 
   return (
     <div className="reveal">
-      <header className="mb-5">
-        <h1 className="text-[1.65rem] font-bold leading-tight tracking-tight">Dashboard</h1>
-        <p className="text-[13px] text-ink-2">{data.client.user_name} · {v.renewal.toLowerCase()}s in the next 90 days</p>
+      <header className="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-[1.65rem] font-bold leading-tight tracking-tight">Dashboard</h1>
+          <p className="text-[13px] text-ink-2">{data.client.user_name} · {v.renewal.toLowerCase()}s in the next {window} days</p>
+        </div>
+        <Segmented value={window} options={[30, 60, 90].map((w) => ({ value: w, label: `${w} days` }))} onChange={(w) => { setWindow(w); setOpen(null); }} />
       </header>
 
       <KpiStrip>
