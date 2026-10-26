@@ -73,6 +73,12 @@ def clients(session=Depends(db)):
 
 
 # ------------------------------------------------------------------ CSM: my week + renewals
+@app.get("/api/clients/{client_id}/retention")
+def retention(client_id: str, window: int = 90, session=Depends(db)):
+    client, pack = get_client(client_id, session)
+    return kpis.retention(session, client_id, pack, window)
+
+
 @app.get("/api/clients/{client_id}/overview")
 def overview(client_id: str, window: int = 90, session=Depends(db)):
     client, pack = get_client(client_id, session)
@@ -90,8 +96,6 @@ def overview(client_id: str, window: int = 90, session=Depends(db)):
         week.append({**summary_row(c, pack), "reason": top, "action": drafts[aid][0] if drafts[aid] else None,
                      "more_actions": max(0, len(drafts[aid]) - 1)})
     done = session.scalars(select(Action).where(Action.client_id == client_id, Action.status != "draft")).all()
-    for c in ctxs:
-        service.with_sources(session, client_id, c, pack)
     return {
         "client": {"id": client.id, "name": client.name, "user_name": client.user_name},
         "kpis": {"renewals": len(ctxs), "high_risk": len(high),
@@ -100,7 +104,6 @@ def overview(client_id: str, window: int = 90, session=Depends(db)):
                  "signals": sum(len(c["signals"]) for c in ctxs),
                  "open_actions": sum(len(drafts[c["account"]["id"]]) for c in ctxs),
                  "decided_actions": len(done)},
-        "outlook": kpis.compute(ctxs),
         "this_week": week,
         "renewals": [summary_row(c, pack) for c in ctxs],
     }

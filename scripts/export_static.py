@@ -34,9 +34,11 @@ for c in grab("/clients"):
     over = grab(f"/clients/{cid}/overview?window=90")
     for row in over["renewals"]:
         grab(f"/clients/{cid}/accounts/{row['account_id']}")
+    for w in (30, 60, 90):
+        grab(f"/clients/{cid}/retention?window={w}")
     for part in ("portfolio", "sources", "trust", "sample-transcript"):
         grab(f"/clients/{cid}/{part}")
-snap = {k.split("?")[0]: v for k, v in snap.items()}
+snap = {(k if "/retention" in k else k.split("?")[0]): v for k, v in snap.items()}
 
 (ROOT / "frontend" / "static-snapshot.json").write_text(json.dumps(snap))
 subprocess.run(["npm", "run", "build:static"], cwd=ROOT / "frontend", check=True)

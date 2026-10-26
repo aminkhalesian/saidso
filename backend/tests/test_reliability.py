@@ -150,17 +150,3 @@ def test_dashboard_lists_every_high_risk_customer(session, http):
     high = [r for r in over["renewals"] if r["band"] == "high"]
     assert len(high) == 6 and len(over["this_week"]) == 6
     assert {r["account_id"] for r in over["this_week"]} == {r["account_id"] for r in high}
-
-    o = over["outlook"]                                  # retention outlook is worked out from the same data
-    assert o["logos_at_risk"]["count"] == 6 and o["logos_at_risk"]["of"] == len(over["renewals"])
-    assert o["logos_at_risk"]["value"] == over["kpis"]["value_at_risk"]
-    expected = round(100 * (over["kpis"]["total_value"] - over["kpis"]["value_at_risk"]) / over["kpis"]["total_value"], 1)
-    assert o["grr_outlook"]["pct"] == expected
-    assert sum(o["health"]["bands"].values()) == len(over["renewals"])
-    assert 0 <= o["call_coverage"]["pct"] <= 100
-
-
-def test_outlook_handles_an_empty_client(session, http):
-    from app.engine import kpis
-    o = kpis.compute([])
-    assert o["grr_outlook"]["pct"] is None and o["health"]["average"] is None and o["logos_at_risk"]["count"] == 0

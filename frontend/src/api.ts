@@ -19,7 +19,8 @@ function findAction(id: number): any {
 
 async function staticReq<T>(path: string, init?: RequestInit): Promise<T> {
   if (!init?.method || init.method === "GET") {
-    const hit = (snapshot as Record<string, any>)[path.split("?")[0]];
+    const snap = snapshot as Record<string, any>;
+    const hit = snap[path] ?? snap[path.split("?")[0]];
     if (hit === undefined) throw new Error("404: not part of the offline copy");
     return hit as T;
   }
@@ -57,6 +58,7 @@ export const api = {
   sample: (c: string) => req<{ transcript: string }>(`/clients/${c}/sample-transcript`),
   analyze: (c: string, transcript: string) =>
     req<any>(`/clients/${c}/analyze`, { method: "POST", body: JSON.stringify({ transcript }) }),
+  retention: (c: string, window = 90) => req<any>(`/clients/${c}/retention?window=${window}`),
   importTemplate: (c: string) => req<{ csv: string }>(`/clients/${c}/import-template`),
   importCsv: (c: string, csv: string) => req<any>(`/clients/${c}/import`, { method: "POST", body: JSON.stringify({ csv }) }),
   acceptImport: (c: string) => req<any>(`/clients/${c}/import/accept`, { method: "POST" }),
