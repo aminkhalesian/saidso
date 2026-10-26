@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { FileText, Sparkles } from "lucide-react";
-import { api } from "../api";
+import { api, STATIC } from "../api";
 import { useClient } from "../context";
 import { Button, PageHead, Panel, Quote } from "../components/ui";
 import { Transcript } from "./Account";
@@ -18,6 +18,10 @@ export function Analyze() {
   const v = client.pack.vocabulary;
 
   async function run() {
+    if (STATIC) {
+      setErr("This shared copy is read-only, so calls cannot be analysed here. Use the live app.");
+      return;
+    }
     if (!text.trim()) {
       setErr("Paste a transcript or load the sample call first.");
       return;

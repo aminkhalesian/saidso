@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Download, FileUp, Trash2, Upload, X } from "lucide-react";
-import { api } from "../api";
+import { api, STATIC } from "../api";
 import { Button, Chip, Panel, RiskPill } from "./ui";
 
 const STATUS: Record<string, { label: string; tone?: "high" | "low" }> = {
@@ -71,6 +71,16 @@ export function ImportPanel({ clientId, customers }: { clientId: string; custome
   }
 
   const s = result?.summary;
+  if (STATIC) {
+    return (
+      <Panel title="Import customers from a CSV" className="mt-5">
+        <p className="max-w-[70ch] text-sm leading-relaxed text-ink-2">
+          This is the shared read-only copy of saidso, so uploads are switched off here. The CSV import needs the live app, where the AI reads the call notes,
+          flags the risks and shows each customer for you to add or decline. It is demonstrated on the presenter's laptop.
+        </p>
+      </Panel>
+    );
+  }
   return (
     <Panel
       title="Import customers from a CSV"
