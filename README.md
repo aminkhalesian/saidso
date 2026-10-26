@@ -25,6 +25,11 @@ New OpenRouter accounts are limited to about 20 AI requests per minute, so a ful
 takes roughly 10-12 minutes; the app paces itself (`LLM_RPM` in `.env`, default 15) and retries when throttled.
 Only one person on the team should run a seed at a time, since you all share the same key's limit.
 
+**Same data as the pitch.** The demo database and a one-file copy of the app are saved in `demo/`:
+`demo/engine.demo.db` is loaded automatically on the first start when there is no `backend/engine.db`, and
+`demo/saidso-offline.html` opens by double-click with no server. To refresh them after changing the data, run
+`./scripts/save_demo.sh` (with `.venv` active), then commit `demo/`. Both hold synthetic data only, never a key.
+
 Without a key everything runs offline with a naive keyword baseline, which is useful as a demo backup and as
 the comparison on the Accuracy page. The live "Analyze a call" screen calls the AI on each click.
 

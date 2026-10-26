@@ -2,7 +2,7 @@
 
 Run from the repo root with the same environment as the app (your .venv):
     python scripts/export_static.py
-Result: frontend/dist-static/index.html (also copied to ./saidso-offline.html)
+Result: frontend/dist-static/index.html (also copied to demo/saidso-offline.html)
 """
 import json
 import shutil
@@ -40,6 +40,7 @@ snap = {k.split("?")[0]: v for k, v in snap.items()}
 
 (ROOT / "frontend" / "static-snapshot.json").write_text(json.dumps(snap))
 subprocess.run(["npm", "run", "build:static"], cwd=ROOT / "frontend", check=True)
-out = ROOT / "saidso-offline.html"
+(ROOT / "demo").mkdir(exist_ok=True)
+out = ROOT / "demo" / "saidso-offline.html"
 shutil.copy(ROOT / "frontend" / "dist-static" / "index.html", out)
 print(f"\nDone: {out} ({out.stat().st_size // 1024} KB, {len(snap)} data pages)")

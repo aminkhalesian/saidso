@@ -8,6 +8,9 @@ source .venv/bin/activate
 pip install -q -r backend/requirements.txt
 if [ ! -d frontend/dist ]; then (cd frontend && npm install --no-audit --no-fund && npm run build); fi
 cd backend
-[ -f engine.db ] || python -m app.cli seed
+if [ ! -f engine.db ]; then
+  if [ -f ../demo/engine.demo.db ]; then cp ../demo/engine.demo.db engine.db; echo "Loaded the demo database from demo/engine.demo.db"
+  else python -m app.cli seed; fi
+fi
 echo "Open http://localhost:8000"
 uvicorn app.main:app --port 8000
